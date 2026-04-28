@@ -30,6 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# room PDF uploads (local dev; production may use Azure only)
+/uploads
+
 # env files (can opt-in for committing if needed)
 .env*
 
