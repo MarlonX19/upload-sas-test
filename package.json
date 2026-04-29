@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --import tsx --test src/domain/upload/azure-pdf-block-id.test.ts src/application/rooms/use-cases/issue-room-file-upload-sas.use-case.test.ts",
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:bun": "bun run scripts/seed.ts",
     "db:migrate-room-images": "tsx scripts/migrate-room-images.ts",

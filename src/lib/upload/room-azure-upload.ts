@@ -1,7 +1,11 @@
-import { uploadOnePdfToAzure } from "@/lib/upload/azure-parallel-pdf-upload";
+import {
+  deleteRoomUploadSession,
+  type RoomUploadSessionV1,
+} from "@/lib/upload/room-upload-session-idb";
+import { uploadResumableRoomPdfToAzureAndSaveUrl } from "@/lib/upload/resumable-room-pdf-upload";
 
 /**
- * Faz upload do PDF ao Azure (SAS) e grava o URL final no documento do quarto (via `fileId`).
+ * Upload retomável: grava o binário em IndexedDB, blocos no Azure, depois PATCH do URL no quarto.
  */
 export async function uploadRoomFileToAzureAndSaveUrl(
   file: File,
@@ -10,25 +14,31 @@ export async function uploadRoomFileToAzureAndSaveUrl(
   hotelId: string,
   onProgress: (percent: number) => void,
 ): Promise<void> {
-  const result = await uploadOnePdfToAzure(file, onProgress);
-  const res = await fetch(
-    `/api/admin/rooms/${encodeURIComponent(roomId)}/files/${encodeURIComponent(fileId)}/url`,
-    {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hotelId, publicBlobUrl: result.publicBlobUrl }),
-    },
+  await uploadResumableRoomPdfToAzureAndSaveUrl(
+    { roomId, fileId, hotelId, file },
+    onProgress,
   );
-  if (!res.ok) {
-    const j = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(j.error ?? "Falha ao guardar a URL do ficheiro no quarto.");
-  }
+}
+
+/**
+ * Continua a partir da sessão em IndexedDB (após perda de rede ou recarregar a página).
+ */
+export async function resumeRoomFileUploadFromSession(
+  roomId: string,
+  fileId: string,
+  hotelId: string,
+  onProgress: (percent: number) => void,
+): Promise<void> {
+  await uploadResumableRoomPdfToAzureAndSaveUrl(
+    { roomId, fileId, hotelId },
+    onProgress,
+  );
 }
 
 const DEFAULT_PARALLEL = 3;
 
 /**
- * Vários PDFs: lotes paralelos (igual à política de `uploadsFile.md`).
+ * Vários PDFs: lotes paralelos (até 3 ficheiros em simultâneo).
  */
 export async function uploadRoomPdfsToAzureInBatches(
   items: { file: File; fileId: string }[],
@@ -56,4 +66,33 @@ export async function uploadRoomPdfsToAzureInBatches(
       }),
     );
   }
+}
+
+/**
+ * Retoma vários envios a partir de metadados de sessão (sem `File` em memória).
+ */
+export async function resumeRoomPdfsFromSessionsInBatches(
+  sessions: RoomUploadSessionV1[],
+  onFileProgress: (index: number, progress: number) => void,
+  onFileComplete?: (index: number) => void,
+  parallel: number = DEFAULT_PARALLEL,
+): Promise<void> {
+  const batchSize = Math.max(1, Math.min(parallel, sessions.length));
+  for (let start = 0; start < sessions.length; start += batchSize) {
+    const slice = sessions.slice(start, start + batchSize);
+    await Promise.all(
+      slice.map((s, offset) => {
+        const index = start + offset;
+        return resumeRoomFileUploadFromSession(s.roomId, s.fileId, s.hotelId, (p) =>
+          onFileProgress(index, p),
+        ).then(() => {
+          onFileComplete?.(index);
+        });
+      }),
+    );
+  }
+}
+
+export async function discardRoomUploadSession(roomId: string, fileId: string): Promise<void> {
+  await deleteRoomUploadSession(roomId, fileId);
 }

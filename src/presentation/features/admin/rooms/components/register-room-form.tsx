@@ -1,10 +1,15 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { MAX_ROOM_PDF_BYTES, MAX_ROOM_PDF_COUNT } from "@/domain/rooms/room-pdf-policy";
 import type { AdminHotelOption, AdminRoomTypeOption } from "@/domain/repositories/room-admin.repository";
-import { uploadRoomPdfsToAzureInBatches } from "@/lib/upload/room-azure-upload";
+import {
+  discardRoomUploadSession,
+  resumeRoomPdfsFromSessionsInBatches,
+  uploadRoomPdfsToAzureInBatches,
+} from "@/lib/upload/room-azure-upload";
+import { listRoomUploadSessions, type RoomUploadSessionV1 } from "@/lib/upload/room-upload-session-idb";
 import { RoomUploadFloatingStatus } from "@/presentation/features/admin/rooms/components/room-upload-floating-status";
 import { Button } from "@/presentation/shared/ui/button";
 import { cn } from "@/lib/cn";
@@ -50,6 +55,27 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
   const [roomTypesLoading, setRoomTypesLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [hud, setHud] = useState<UploadHud | null>(null);
+  const [pendingSessions, setPendingSessions] = useState<RoomUploadSessionV1[]>([]);
+  const [pendingResumeLoading, setPendingResumeLoading] = useState(false);
+  const [onLine, setOnLine] = useState(
+    () => typeof navigator !== "undefined" && navigator.onLine,
+  );
+
+  useEffect(() => {
+    void listRoomUploadSessions().then(setPendingSessions);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const up = () => setOnLine(true);
+    const down = () => setOnLine(false);
+    window.addEventListener("online", up);
+    window.addEventListener("offline", down);
+    return () => {
+      window.removeEventListener("online", up);
+      window.removeEventListener("offline", down);
+    };
+  }, []);
 
   const loadRoomTypes = useCallback(async (hid: string) => {
     if (!hid) {
@@ -89,6 +115,7 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
         completed: 0,
         total: 0,
         indeterminate: true,
+        networkWaiting: false,
       };
     }
     const n = hud.names.length;
@@ -104,8 +131,71 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
       completed: hud.completed,
       total: n,
       indeterminate: false,
+      networkWaiting: !onLine,
     };
-  }, [hud]);
+  }, [hud, onLine]);
+
+  const refreshPending = useCallback(() => {
+    void listRoomUploadSessions().then(setPendingSessions);
+  }, []);
+
+  async function onResumePendingUploads() {
+    if (pendingSessions.length === 0) return;
+    setPendingResumeLoading(true);
+    setMessage(null);
+    const names = pendingSessions.map((s) => s.fileName);
+    setHud({
+      kind: "upload",
+      names,
+      progress: new Array(names.length).fill(0),
+      completed: 0,
+    });
+    try {
+      const snapshot = [...pendingSessions];
+      await resumeRoomPdfsFromSessionsInBatches(
+        snapshot,
+        (fileIndex, progress) => {
+          setHud((prev) => {
+            if (!prev || prev.kind !== "upload") return prev;
+            const next = [...prev.progress];
+            next[fileIndex] = progress;
+            return { ...prev, progress: next };
+          });
+        },
+        (fileIndex) => {
+          setHud((prev) => {
+            if (!prev || prev.kind !== "upload") return prev;
+            return {
+              ...prev,
+              completed: prev.completed + 1,
+              progress: prev.progress.map((v, j) => (j === fileIndex ? 100 : v)),
+            };
+          });
+        },
+      );
+      setMessage({ type: "ok", text: "Envios pendentes concluídos." });
+    } catch (err) {
+      const text = err instanceof Error ? err.message : "Falha ao retomar o envio.";
+      setMessage({ type: "err", text: text });
+    } finally {
+      refreshPending();
+      setPendingResumeLoading(false);
+      setHud(null);
+    }
+  }
+
+  async function onDiscardPendingUploads() {
+    if (pendingSessions.length === 0) return;
+    setPendingResumeLoading(true);
+    try {
+      await Promise.all(
+        pendingSessions.map((s) => discardRoomUploadSession(s.roomId, s.fileId)),
+      );
+      setPendingSessions([]);
+    } finally {
+      setPendingResumeLoading(false);
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -199,6 +289,7 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
             });
           },
         );
+        refreshPending();
       }
 
       setMessage({ type: "ok", text: "Quarto registado e PDFs associados com sucesso." });
@@ -210,6 +301,7 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
         type: "err",
         text: `O quarto pode já existir com entradas de ficheiro pendentes. ${text}`,
       });
+      refreshPending();
     } finally {
       setLoading(false);
       setHud(null);
@@ -227,6 +319,39 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
   return (
     <>
       {hudProps && <RoomUploadFloatingStatus {...hudProps} />}
+
+      {pendingSessions.length > 0 && !hud && (
+        <div
+          className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"
+          role="status"
+        >
+          <p className="font-medium">Envio(s) PDF em pausa</p>
+          <p className="mt-1.5 text-amber-900/90">
+            {pendingSessions.length} ficheiro(s) guardado(s) localmente (IndexedDB) — podes retomar após
+            perder a ligação ou recarregar a página. Os dados ficam associados ao quarto já criado no
+            sistema.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              className="h-9"
+              disabled={pendingResumeLoading}
+              onClick={() => void onResumePendingUploads()}
+            >
+              {pendingResumeLoading ? "A processar…" : "Retomar envios"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-9"
+              disabled={pendingResumeLoading}
+              onClick={() => void onDiscardPendingUploads()}
+            >
+              Descartar sessões
+            </Button>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={(e) => void onSubmit(e)} className="space-y-6">
         {message && (

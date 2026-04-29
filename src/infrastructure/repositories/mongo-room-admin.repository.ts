@@ -146,4 +146,29 @@ export class MongoRoomAdminRepository implements RoomAdminRepository {
     );
     return (res.matchedCount ?? 0) > 0;
   }
+
+  async findRoomFileNameByFileId(roomId: string, fileId: string): Promise<string | null> {
+    if (!ObjectId.isValid(roomId)) {
+      return null;
+    }
+    const client = await clientPromise;
+    const db = client.db();
+    const doc = await db
+      .collection(COLLECTIONS.rooms)
+      .findOne(
+        { _id: new ObjectId(roomId) },
+        { projection: { files: 1 } },
+      );
+    const files = doc?.files;
+    if (!Array.isArray(files)) {
+      return null;
+    }
+    for (const f of files) {
+      const row = f as { fileId?: string; fileName?: string };
+      if (row.fileId === fileId && typeof row.fileName === "string") {
+        return row.fileName;
+      }
+    }
+    return null;
+  }
 }

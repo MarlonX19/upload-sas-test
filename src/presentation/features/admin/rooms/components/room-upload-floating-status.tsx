@@ -17,6 +17,8 @@ type Props = {
   total: number;
   /** Indeterminado para creating */
   indeterminate?: boolean;
+  /** Quando sem rede mas o envio vai retomar com `online` */
+  networkWaiting?: boolean;
 };
 
 /**
@@ -29,6 +31,7 @@ export function RoomUploadFloatingStatus({
   completed,
   total,
   indeterminate = false,
+  networkWaiting = false,
 }: Props) {
   const pct = Math.max(0, Math.min(100, overallPercent));
   const offset = C - (pct / 100) * C;
@@ -89,6 +92,9 @@ export function RoomUploadFloatingStatus({
             <p className="mt-0.5 truncate text-sm font-semibold text-neutral-900" title={currentFileLabel}>
               {currentFileLabel}
             </p>
+          )}
+          {mode === "uploading" && networkWaiting && (
+            <p className="mt-1 text-xs text-amber-800">Sem ligação. O envio retoma automaticamente…</p>
           )}
           {mode === "creating" && (
             <p className="mt-0.5 text-sm text-neutral-600">A guardar no MongoDB…</p>

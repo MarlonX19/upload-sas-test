@@ -37,4 +37,8 @@ export interface RoomAdminRepository {
   appendRoomFile(roomId: string, file: RoomFileRef): Promise<void>;
   /** Atualiza `fileURL` do item com o `fileId` dado (preenchimento pós-upload Azure). */
   setRoomFileUrlByFileId(roomId: string, fileId: string, publicBlobUrl: string): Promise<boolean>;
+  /**
+   * Resolve o nome lógico do ficheiro no quarto (para o nome de blob no Azure) ou `null` se não existir.
+   */
+  findRoomFileNameByFileId(roomId: string, fileId: string): Promise<string | null>;
 }

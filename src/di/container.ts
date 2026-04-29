@@ -11,6 +11,7 @@ import { ListAdminHotelsUseCase } from "@/application/rooms/use-cases/list-admin
 import { ListAdminRoomTypesForHotelUseCase } from "@/application/rooms/use-cases/list-admin-room-types-for-hotel.use-case";
 import { UploadRoomPdfUseCase } from "@/application/rooms/use-cases/upload-room-pdf.use-case";
 import { CompleteRoomFileUrlUseCase } from "@/application/rooms/use-cases/complete-room-file-url.use-case";
+import { IssueRoomFileUploadSasUseCase } from "@/application/rooms/use-cases/issue-room-file-upload-sas.use-case";
 import { IssuePdfBlobUploadSasUseCase } from "@/application/upload/use-cases/issue-pdf-blob-upload-sas.use-case";
 import type { AvailabilityReadRepository } from "@/domain/repositories/availability-read.repository";
 import type { RoomAdminRepository } from "@/domain/repositories/room-admin.repository";
@@ -66,5 +67,9 @@ container
 container
   .bind(CompleteRoomFileUrlUseCase)
   .toConstantValue(new CompleteRoomFileUrlUseCase(roomAdminRepository));
+
+container
+  .bind(IssueRoomFileUploadSasUseCase)
+  .toConstantValue(new IssueRoomFileUploadSasUseCase(roomAdminRepository, userDelegationWriteSas));
 
 export { container };
