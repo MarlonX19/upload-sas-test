@@ -10,7 +10,7 @@ export const searchAvailabilityInputSchema = z
     rooms: z.coerce.number().int().min(1).max(8).optional(),
   })
   .transform((data) => ({
-    hotelSlug: data.hotelSlug ?? "hotelli-seed-demo",
+    hotelSlug: data.hotelSlug ?? "upload-demo-seed",
     checkIn: data.checkIn,
     checkOut: data.checkOut,
     adults: data.adults ?? 2,

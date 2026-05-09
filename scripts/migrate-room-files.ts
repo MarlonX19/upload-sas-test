@@ -7,7 +7,7 @@ import { COLLECTIONS } from "@/infrastructure/database/collections";
 config({ path: resolve(process.cwd(), ".env") });
 config({ path: resolve(process.cwd(), ".env.local"), override: true });
 
-/** Garante o campo `files: []` em documentos de quartos legados. */
+/** Garante o campo `files: []` em documentos de registos legados. */
 async function main() {
   const uri = process.env.MONGODB_URI;
   if (!uri) {

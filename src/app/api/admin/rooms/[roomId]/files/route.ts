@@ -13,9 +13,9 @@ function mapErrorCode(
 ): { status: number; message: string } {
   switch (code) {
     case "ROOM_NOT_FOUND":
-      return { status: 404, message: "Quarto não encontrado." };
+      return { status: 404, message: "Registo não encontrado." };
     case "TOO_MANY_FILES":
-      return { status: 400, message: "Limite de 12 PDFs por quarto atingido." };
+      return { status: 400, message: "Limite de 12 PDFs por destino atingido." };
     case "FILE_TOO_LARGE":
       return { status: 400, message: "Cada PDF pode ter no máximo 250 MB." };
     case "NOT_PDF":
@@ -39,7 +39,7 @@ export async function POST(req: Request, context: RouteParams) {
   const file = form.get("file");
 
   if (typeof hotelId !== "string" || !/^[a-fA-F0-9]{24}$/.test(hotelId)) {
-    return NextResponse.json({ error: "hotelId inválido." }, { status: 400 });
+    return NextResponse.json({ error: "Identificador de organização inválido." }, { status: 400 });
   }
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "Ficheiro em falta (campo file)." }, { status: 400 });

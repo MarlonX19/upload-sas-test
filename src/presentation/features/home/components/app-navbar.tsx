@@ -6,7 +6,7 @@ import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/cn";
 import { Button } from "@/presentation/shared/ui/button";
 
-export function HotelliNavbar() {
+export function AppNavbar() {
   const { data: session, status } = useSession();
 
   const displayName =
@@ -15,19 +15,21 @@ export function HotelliNavbar() {
     null;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-neutral-200 bg-white/95 shadow-hotel-sm backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-neutral-200 bg-white/95 shadow-surface-sm backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <Link
           href="/"
           className="group flex shrink-0 items-baseline gap-2 transition-[opacity] duration-200 ease-out hover:opacity-90"
         >
-          <span className="text-xl font-semibold tracking-tight text-primary-600">hotelli</span>
+          <span className="text-xl font-semibold tracking-tight text-primary-600">Upload SAS</span>
           <span className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-            Hotel
+            Demo
           </span>
         </Link>
         <nav className="flex min-w-0 items-center justify-end gap-2 text-sm font-medium text-neutral-600 sm:gap-4">
-          <span className="hidden sm:inline">Lisboa</span>
+          <Link href="/upload/pdfs" className="hidden text-sm text-primary-600 hover:underline sm:inline">
+            Upload PDF
+          </Link>
           {status === "loading" && (
             <span className="max-w-[12rem] truncate text-neutral-400" aria-hidden>
               …
@@ -46,7 +48,7 @@ export function HotelliNavbar() {
               href="/admin/rooms/new"
               className="hidden text-sm text-primary-600 hover:underline sm:inline"
             >
-              Novo quarto
+              Novo registo
             </Link>
           )}
           {status === "authenticated" ? (

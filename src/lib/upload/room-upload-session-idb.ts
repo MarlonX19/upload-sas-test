@@ -1,4 +1,4 @@
-const DB_NAME = "hotelli-room-upload";
+const DB_NAME = "upload-sas-room-sessions";
 const DB_VERSION = 1;
 const STORE = "sessions";
 

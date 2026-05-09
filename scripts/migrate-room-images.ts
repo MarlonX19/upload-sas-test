@@ -8,7 +8,7 @@ import { ROOM_TYPE_IMAGE_URLS } from "@/infrastructure/database/room-type-images
 config({ path: resolve(process.cwd(), ".env") });
 config({ path: resolve(process.cwd(), ".env.local"), override: true });
 
-const SEED_HOTEL_SLUG = "hotelli-seed-demo";
+const SEED_DEMO_ORG_SLUG = "upload-demo-seed";
 
 async function main() {
   const uri = process.env.MONGODB_URI;
@@ -22,9 +22,11 @@ async function main() {
   const db = client.db();
 
   try {
-    const hotel = await db.collection(COLLECTIONS.hotels).findOne({ slug: SEED_HOTEL_SLUG });
+    const hotel = await db.collection(COLLECTIONS.hotels).findOne({ slug: SEED_DEMO_ORG_SLUG });
     if (!hotel?._id) {
-      console.error(`Hotel com slug "${SEED_HOTEL_SLUG}" não encontrado. Corra a seed primeiro.`);
+      console.error(
+        `Organização com slug "${SEED_DEMO_ORG_SLUG}" não encontrada. Corra a seed primeiro.`,
+      );
       process.exit(1);
     }
 
@@ -42,7 +44,7 @@ async function main() {
       }
     }
 
-    console.log(`Migração de imagens concluída (${updated} tipos de quarto).`);
+    console.log(`Migração de imagens concluída (${updated} categorias).`);
   } finally {
     await client.close();
   }

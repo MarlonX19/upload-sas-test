@@ -24,17 +24,17 @@ export class IssueRoomFileUploadSasUseCase {
   ): Promise<IssueRoomFileUploadSasResult> {
     const belongs = await this.roomAdmin.roomBelongsToHotel(roomId, input.hotelId);
     if (!belongs) {
-      return { ok: false, code: "ROOM_NOT_FOUND", message: "Quarto ou hotel inválido." };
+      return { ok: false, code: "ROOM_NOT_FOUND", message: "Registo ou organização inválidos." };
     }
 
     const fileName = await this.roomAdmin.findRoomFileNameByFileId(roomId, fileId);
     if (fileName === null) {
-      return { ok: false, code: "FILE_NOT_FOUND", message: "Ficheiro não encontrado no quarto." };
+      return { ok: false, code: "FILE_NOT_FOUND", message: "Ficheiro não encontrado neste registo." };
     }
 
     const blobName = buildAzurePdfBlobName(fileName, fileId);
     if (!blobName) {
-      return { ok: false, code: "INVALID_BLOB", message: "Nome de ficheiro inválido no quarto." };
+      return { ok: false, code: "INVALID_BLOB", message: "Nome de ficheiro inválido neste registo." };
     }
 
     try {

@@ -177,7 +177,7 @@ export async function uploadResumableRoomPdfToAzureAndSaveUrl(
       throw new Error("Não existe sessão de upload guardada para retomar.");
     }
     if (existing.hotelId !== hotelId) {
-      throw new Error("Sessão de upload incompatível com o hotel actual.");
+      throw new Error("Sessão de upload incompatível com a organização actual.");
     }
     session = existing;
   }
@@ -263,7 +263,7 @@ export async function uploadResumableRoomPdfToAzureAndSaveUrl(
   );
   if (!patchRes.ok) {
     const j = (await patchRes.json().catch(() => ({}))) as { error?: string };
-    throw new Error(j.error ?? "Falha ao guardar a URL do ficheiro no quarto.");
+    throw new Error(j.error ?? "Falha ao guardar a URL do ficheiro no registo.");
   }
 
   await deleteRoomUploadSession(roomId, fileId);

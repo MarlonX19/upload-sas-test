@@ -89,7 +89,7 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
       const res = await fetch(`/api/admin/hotels/${hid}/room-types`);
       if (!res.ok) {
         setRoomTypes([]);
-        setMessage({ type: "err", text: "Não foi possível carregar os tipos de quarto." });
+        setMessage({ type: "err", text: "Não foi possível carregar as categorias." });
         return;
       }
       const data = (await res.json()) as { roomTypes: AdminRoomTypeOption[] };
@@ -225,7 +225,7 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
     }
 
     if (!hotelId || !roomTypeId) {
-      setMessage({ type: "err", text: "Selecione hotel e tipo de quarto." });
+      setMessage({ type: "err", text: "Selecione a organização e a categoria." });
       return;
     }
 
@@ -249,7 +249,7 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
       });
       const body = (await res.json().catch(() => ({}))) as { roomId?: string; error?: string };
       if (!res.ok) {
-        setMessage({ type: "err", text: body.error ?? "Não foi possível criar o quarto." });
+        setMessage({ type: "err", text: body.error ?? "Não foi possível criar o registo." });
         return;
       }
       const roomId = body.roomId;
@@ -292,14 +292,14 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
         refreshPending();
       }
 
-      setMessage({ type: "ok", text: "Quarto registado e PDFs associados com sucesso." });
+      setMessage({ type: "ok", text: "Registo criado e PDFs associados com sucesso." });
       setNumber("");
       setFiles(null);
     } catch (err) {
       const text = err instanceof Error ? err.message : "Falha durante o envio para o Azure.";
       setMessage({
         type: "err",
-        text: `O quarto pode já existir com entradas de ficheiro pendentes. ${text}`,
+        text: `O registo pode já existir com entradas de ficheiro pendentes. ${text}`,
       });
       refreshPending();
     } finally {
@@ -311,7 +311,7 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
   if (hotels.length === 0) {
     return (
       <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-        Não existem hotéis ativos na base de dados. Executa a seed depois de configurar a MongoDB.
+        Não existem organizações activas na base de dados. Executa a seed depois de configurar a MongoDB.
       </p>
     );
   }
@@ -328,7 +328,7 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
           <p className="font-medium">Envio(s) PDF em pausa</p>
           <p className="mt-1.5 text-amber-900/90">
             {pendingSessions.length} ficheiro(s) guardado(s) localmente (IndexedDB) — podes retomar após
-            perder a ligação ou recarregar a página. Os dados ficam associados ao quarto já criado no
+            perder a ligação ou recarregar a página. Os dados ficam associados ao registo já criado no
             sistema.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -370,11 +370,11 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-neutral-800" htmlFor="hotel">
-              Hotel
+            <label className="block text-sm font-medium text-neutral-800" htmlFor="org">
+              Organização
             </label>
             <select
-              id="hotel"
+              id="org"
               required
               className="mt-1.5 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm"
               value={hotelId}
@@ -392,7 +392,7 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
 
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-neutral-800" htmlFor="roomType">
-              Tipo de quarto
+              Tipo / categoria
             </label>
             <select
               id="roomType"
@@ -419,7 +419,7 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
 
           <div>
             <label className="block text-sm font-medium text-neutral-800" htmlFor="num">
-              Número do quarto
+              Identificador do registo
             </label>
             <input
               id="num"
@@ -480,7 +480,7 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
             />
             <p className="mt-1.5 text-xs text-neutral-500">
               {files && files.length > 0
-                ? `${files.length} ficheiro(s). O quarto é criado de imediato; o estado do upload surge no canto
+                ? `${files.length} ficheiro(s). O registo é criado de imediato; o estado do upload surge no canto
               inferior direito.`
                 : "Opcional. Só ficheiros PDF, enviados para o Azure Storage."}
             </p>
@@ -489,7 +489,7 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
 
         <div className="flex flex-wrap gap-3">
           <Button type="submit" disabled={loading} className="h-10 px-6 text-sm">
-            {loading ? "A processar…" : "Registar quarto"}
+            {loading ? "A processar…" : "Registar"}
           </Button>
         </div>
       </form>

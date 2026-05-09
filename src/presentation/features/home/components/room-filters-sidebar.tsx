@@ -22,7 +22,7 @@ export function RoomFiltersSidebar({ filters, onPatch, onReset, className }: Roo
         "lg:sticky lg:top-20 lg:max-h-[calc(100vh-5rem)] lg:self-start lg:overflow-hidden",
         className,
       )}
-      aria-label="Filtros de quartos"
+      aria-label="Filtros de resultados"
     >
       <div className="h-full overflow-y-auto p-6">
         <RoomFiltersPanel filters={filters} onPatch={onPatch} onReset={onReset} />

@@ -54,9 +54,9 @@ export function RoomFiltersDrawer({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Filtros de quartos"
+        aria-label="Filtros de resultados"
         className={cn(
-          "fixed left-0 top-0 z-[190] flex h-full w-[min(100%,320px)] max-w-full flex-col border-r border-neutral-200 bg-neutral-50 shadow-hotel-lg transition-transform duration-200 ease-out lg:hidden",
+          "fixed left-0 top-0 z-[190] flex h-full w-[min(100%,320px)] max-w-full flex-col border-r border-neutral-200 bg-neutral-50 shadow-surface-lg transition-transform duration-200 ease-out lg:hidden",
           open ? "translate-x-0" : "-translate-x-full pointer-events-none",
         )}
       >

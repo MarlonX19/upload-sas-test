@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "hotelli",
+      "name": "upload-sas-test",
       "dependencies": {
         "@azure/identity": "^4.13.1",
         "@azure/storage-blob": "^12.31.0",

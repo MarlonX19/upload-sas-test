@@ -19,7 +19,7 @@ export const createRoomInputSchema = z.object({
   roomTypeId: objectIdHex,
   number: z.string().trim().min(1).max(32),
   floor: z.coerce.number().int().min(-5).max(200),
-  status: z.string().refine((s) => isRoomStatus(s), "Estado do quarto inválido."),
+  status: z.string().refine((s) => isRoomStatus(s), "Estado do registo inválido."),
   pendingFiles: z.array(pendingFileSchema).max(MAX_ROOM_PDF_COUNT).default([]),
 });
 

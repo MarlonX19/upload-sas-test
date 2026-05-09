@@ -7,7 +7,7 @@ import {
 
 import type { UserDelegationWriteSasPort } from "@/application/ports/user-delegation-write-sas.port";
 
-const DEFAULT_CONTAINER = "uploads";
+const DEFAULT_CONTAINER = "workspace";
 const SAS_TTL_MS = 10 * 60 * 1000;
 const CLOCK_SKEW_MS = 5 * 60 * 1000;
 

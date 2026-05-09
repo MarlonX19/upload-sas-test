@@ -1,14 +1,14 @@
 import Link from "next/link";
 
 import { MicrosoftLoginButton } from "@/presentation/features/auth/components/microsoft-login-button";
-import { HotelliNavbar } from "@/presentation/features/home/components/hotelli-navbar";
+import { AppNavbar } from "@/presentation/features/home/components/app-navbar";
 
 export default function LoginPage() {
   return (
     <>
-      <HotelliNavbar />
+      <AppNavbar />
       <div className="flex min-h-[70vh] flex-col items-center justify-center bg-neutral-50 px-4">
-        <div className="w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-8 shadow-hotel-sm">
+        <div className="w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-8 shadow-surface-sm">
           <h1 className="text-center text-2xl font-semibold tracking-tight text-neutral-900">
             Entrar
           </h1>

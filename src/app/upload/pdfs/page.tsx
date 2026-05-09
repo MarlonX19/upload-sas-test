@@ -1,15 +1,15 @@
-import { HotelliNavbar } from "@/presentation/features/home/components/hotelli-navbar";
+import { AppNavbar } from "@/presentation/features/home/components/app-navbar";
 import { PdfMultiPicker } from "@/presentation/features/upload/components/pdf-multi-picker";
 
 export const metadata = {
-  title: "Upload de PDFs — hotelli",
+  title: "Upload de PDFs — Upload SAS",
   description: "Upload direto de PDFs para o Azure Blob Storage (SAS).",
 };
 
 export default function UploadPdfsPage() {
   return (
     <>
-      <HotelliNavbar />
+      <AppNavbar />
       <main className="flex flex-1 flex-col bg-neutral-50 px-4 py-10 sm:px-6">
         <div className="mx-auto w-full max-w-2xl">
           <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">Upload de PDFs</h1>

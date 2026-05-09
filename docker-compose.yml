@@ -3,7 +3,7 @@ version: "3.8"
 services:
   mongodb:
     image: mongo:7
-    container_name: hotelli-mongodb
+    container_name: upload-sas-mongodb
     restart: always
 
     ports:
@@ -12,7 +12,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin123
-      MONGO_INITDB_DATABASE: hotelli
+      MONGO_INITDB_DATABASE: upload_sas_demo
 
     volumes:
       - mongo-data:/data/db

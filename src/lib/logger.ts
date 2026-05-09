@@ -1,4 +1,4 @@
-const prefix = "[hotelli]";
+const prefix = "[upload-sas]";
 
 export const logger = {
   info: (...args: unknown[]) => {

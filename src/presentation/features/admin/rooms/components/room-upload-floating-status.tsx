@@ -6,7 +6,7 @@ const R = 22;
 const C = 2 * Math.PI * R;
 
 type Props = {
-  /** Fase "a criar quarto" (spinner) ou progresso de uploads */
+  /** Fase "a criar registo" (spinner) ou progresso de uploads */
   mode: "creating" | "uploading";
   /** 0–100: progresso global (média dos ficheiros em curso) */
   overallPercent: number;
@@ -40,11 +40,11 @@ export function RoomUploadFloatingStatus({
     <div
       className={cn(
         "pointer-events-none fixed bottom-5 right-5 z-[100] flex w-[min(calc(100vw-1.5rem),20rem)]",
-        "rounded-xl border border-neutral-200 bg-white/95 p-3 shadow-hotel-lg backdrop-blur-md",
+        "rounded-xl border border-neutral-200 bg-white/95 p-3 shadow-surface-lg backdrop-blur-md",
       )}
       role="status"
       aria-live="polite"
-      aria-label={mode === "creating" ? "A criar o quarto" : "A enviar ficheiros para o Azure"}
+      aria-label={mode === "creating" ? "A criar o registo" : "A enviar ficheiros para o Azure"}
     >
       <div className="flex w-full items-center gap-3">
         <div className="relative h-12 w-12 shrink-0">
@@ -86,7 +86,7 @@ export function RoomUploadFloatingStatus({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-            {mode === "creating" ? "A criar quarto" : "A enviar para o Azure"}
+            {mode === "creating" ? "A criar registo" : "A enviar para o Azure"}
           </p>
           {mode === "uploading" && currentFileLabel && (
             <p className="mt-0.5 truncate text-sm font-semibold text-neutral-900" title={currentFileLabel}>

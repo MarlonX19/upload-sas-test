@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const containerName = "uploads";
+const containerName = process.env.AZURE_STORAGE_UPLOADS_CONTAINER || "workspace";
 const blobName = "test.txt";
 
 export async function GET() {

@@ -10,7 +10,7 @@ import { ROOM_TYPE_IMAGE_URLS } from "@/infrastructure/database/room-type-images
 config({ path: resolve(process.cwd(), ".env") });
 config({ path: resolve(process.cwd(), ".env.local"), override: true });
 
-const SEED_HOTEL_SLUG = "hotelli-seed-demo";
+const SEED_DEMO_ORG_SLUG = "upload-demo-seed";
 
 async function ensureIndexes(db: Db) {
   await db.collection(COLLECTIONS.hotels).createIndex({ slug: 1 }, { unique: true });
@@ -25,8 +25,8 @@ async function ensureIndexes(db: Db) {
   await db.collection(COLLECTIONS.bookings).createIndex({ guestId: 1 });
 }
 
-async function clearSeedHotel(db: Db) {
-  const existing = await db.collection(COLLECTIONS.hotels).findOne({ slug: SEED_HOTEL_SLUG });
+async function clearSeedDemo(db: Db) {
+  const existing = await db.collection(COLLECTIONS.hotels).findOne({ slug: SEED_DEMO_ORG_SLUG });
   if (!existing?._id) return;
 
   const hotelId = existing._id as ObjectId;
@@ -48,7 +48,7 @@ async function clearSeedHotel(db: Db) {
   await db.collection(COLLECTIONS.hotels).deleteOne({ _id: hotelId });
 
   await db.collection(COLLECTIONS.guests).deleteMany({
-    email: { $in: ["maria.silva@seed.hotelli.test", "joao.santos@seed.hotelli.test"] },
+    email: { $in: ["maria.silva@seed.upload-demo.test", "joao.santos@seed.upload-demo.test"] },
   });
 }
 
@@ -69,29 +69,29 @@ async function main() {
 
   try {
     await ensureIndexes(db);
-    await clearSeedHotel(db);
+    await clearSeedDemo(db);
 
     const t = now();
     const hotelId = new ObjectId();
 
     await db.collection(COLLECTIONS.hotels).insertOne({
       _id: hotelId,
-      name: "Hotelli Lisboa — Demo",
-      slug: SEED_HOTEL_SLUG,
+      name: "Organização demo — Upload SAS",
+      slug: SEED_DEMO_ORG_SLUG,
       description:
-        "Hotel de demonstração para desenvolvimento. Bem-vindo à experiência Hotelli.",
+        "Dados de demonstração para desenvolvimento: catálogo fictício e uploads de PDF de exemplo.",
       address: {
-        street: "Avenida da Liberdade 120",
-        city: "Lisboa",
-        state: "Lisboa",
+        street: "Rua de Exemplo 100",
+        city: "Porto",
+        state: "Porto",
         country: "PT",
-        postalCode: "1250-001",
-        coordinates: [-9.145, 38.7223],
+        postalCode: "4000-000",
+        coordinates: [-8.6291, 41.1579],
       },
-      contact: { phone: "+351 21 000 0000", email: "reservas@seed.hotelli.test" },
+      contact: { phone: "+351 22 000 0000", email: "contacto@seed.upload-demo.test" },
       timezone: "Europe/Lisbon",
       starRating: 4,
-      amenities: ["Wi‑Fi", "Pequeno-almoço", "Ar condicionado", "Receção 24h", "Fitness"],
+      amenities: ["Wi‑Fi", "Armazenamento seguro", "Ar condicionado", "Suporte", "Área comum"],
       imageUrls: [],
       isActive: true,
       createdAt: t,
@@ -102,7 +102,7 @@ async function main() {
       {
         slug: "standard-double",
         name: "Standard Duplo",
-        description: "Quarto confortável com cama de casal ou duas individuais.",
+        description: "Unidade confortável com cama de casal ou duas individuais.",
         maxOccupancy: 2,
         bedSummary: "1 cama queen ou 2 singles",
         basePricePerNight: 8900,
@@ -205,7 +205,7 @@ async function main() {
     const guestId = new ObjectId();
     await db.collection(COLLECTIONS.guests).insertOne({
       _id: guestId,
-      email: "maria.silva@seed.hotelli.test",
+      email: "maria.silva@seed.upload-demo.test",
       phone: "+351 910 000 001",
       firstName: "Maria",
       lastName: "Silva",
@@ -221,14 +221,14 @@ async function main() {
     checkOut.setDate(checkOut.getDate() + 3);
     checkOut.setHours(11, 0, 0, 0);
 
-    const bookingRef = `HTL-${Date.now().toString(36).toUpperCase().slice(-8)}`;
+    const bookingRef = `DEMO-${Date.now().toString(36).toUpperCase().slice(-8)}`;
 
     await db.collection(COLLECTIONS.bookings).insertOne({
       hotelId,
       bookingReference: bookingRef,
       guestId,
       guest: {
-        email: "maria.silva@seed.hotelli.test",
+        email: "maria.silva@seed.upload-demo.test",
         firstName: "Maria",
         lastName: "Silva",
         phone: "+351 910 000 001",
@@ -241,7 +241,7 @@ async function main() {
       children: 0,
       totalAmount: 11500 * 3,
       currency: "EUR",
-      specialRequests: "Quarto alto, longe do elevador.",
+      specialRequests: "Preferência por piso alto, longe do elevador.",
       source: "web",
       createdAt: t,
       updatedAt: t,
@@ -249,7 +249,7 @@ async function main() {
 
     await db.collection(COLLECTIONS.guests).insertOne({
       _id: new ObjectId(),
-      email: "joao.santos@seed.hotelli.test",
+      email: "joao.santos@seed.upload-demo.test",
       phone: "+351 920 000 002",
       firstName: "João",
       lastName: "Santos",
@@ -258,9 +258,9 @@ async function main() {
     });
 
     console.log("Seed concluído.");
-    console.log(`  Hotel slug: ${SEED_HOTEL_SLUG} (${hotelId.toHexString()})`);
-    console.log(`  Tipos de quarto: ${roomTypeSpecs.length}`);
-    console.log(`  Quartos: ${roomRows.length}`);
+    console.log(`  Organização (slug): ${SEED_DEMO_ORG_SLUG} (${hotelId.toHexString()})`);
+    console.log(`  Categorias: ${roomTypeSpecs.length}`);
+    console.log(`  Registos / unidades: ${roomRows.length}`);
     console.log(`  Reserva exemplo: ${bookingRef}`);
   } finally {
     await client.close();

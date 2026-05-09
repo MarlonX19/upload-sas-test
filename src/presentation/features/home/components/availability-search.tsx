@@ -120,8 +120,8 @@ export function AvailabilitySearch() {
       <Card>
         <CardTitle>Pesquisar disponibilidade</CardTitle>
         <CardDescription>
-          Indica datas, hóspedes e quartos — mostramos só tipos de quarto que comportam a tua ocupação e stock
-          suficiente.
+          Indica datas, ocupação e quantidade de unidades — mostramos só categorias com lotação e stock
+          adequados ao período.
         </CardDescription>
 
         <div className="mt-6 flex flex-col gap-4 lg:mt-8 lg:flex-row lg:items-end lg:gap-4">
@@ -150,7 +150,7 @@ export function AvailabilitySearch() {
                   aria-label="Fechar calendário"
                   onClick={() => setCalendarOpen(false)}
                 />
-                <div className="absolute left-0 z-[100] mt-2 rounded-xl border border-neutral-200 bg-white p-3 shadow-hotel-lg transition-opacity duration-200 ease-out sm:p-4">
+                <div className="absolute left-0 z-[100] mt-2 rounded-xl border border-neutral-200 bg-white p-3 shadow-surface-lg transition-opacity duration-200 ease-out sm:p-4">
                   <DayPicker
                     mode="range"
                     selected={range}
@@ -158,7 +158,7 @@ export function AvailabilitySearch() {
                     locale={dayPickerPtBR}
                     numberOfMonths={monthColumns}
                     disabled={{ before: new Date() }}
-                    className="hotelli-daypicker"
+                    className="upload-daypicker"
                   />
                   <div className="mt-4 flex justify-end border-t border-neutral-200 pt-4">
                     <Button
@@ -210,7 +210,8 @@ export function AvailabilitySearch() {
         <section className="mt-10 sm:mt-12" aria-live="polite">
           <div className="mb-6 flex flex-wrap items-baseline justify-between gap-4 sm:mb-8">
             <div>
-              <h3 className="text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl">
+              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Organização</p>
+              <h3 className="mt-1 text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl">
                 {data.hotel.name}
               </h3>
               {data.hotel.city && <p className="mt-1 text-sm text-neutral-600">{data.hotel.city}</p>}
@@ -222,7 +223,7 @@ export function AvailabilitySearch() {
                   ? ` · ${data.guests.children} ${data.guests.children === 1 ? "criança" : "crianças"}`
                   : " · 0 crianças"}
                 {" · "}
-                {data.guests.rooms} {data.guests.rooms === 1 ? "quarto" : "quartos"}
+                {data.guests.rooms} {data.guests.rooms === 1 ? "unidade" : "unidades"}
               </p>
               <p className="mt-1">
                 {data.nights} {data.nights === 1 ? "noite" : "noites"} ·{" "}
@@ -233,17 +234,17 @@ export function AvailabilitySearch() {
           </div>
 
           {data.empty ? (
-            <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-14 text-center shadow-hotel-sm sm:px-8 sm:py-16">
+            <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-14 text-center shadow-surface-sm sm:px-8 sm:py-16">
               <p className="text-lg font-semibold text-neutral-800">
-                Não há quartos disponíveis para estas condições.
+                Não há unidades disponíveis para estas condições.
               </p>
               <p className="mt-3 text-sm leading-relaxed text-neutral-600">
                 Para {data.guests.adults} {data.guests.adults === 1 ? "adulto" : "adultos"}
                 {data.guests.children > 0
                   ? `, ${data.guests.children} ${data.guests.children === 1 ? "criança" : "crianças"}`
                   : ""}{" "}
-                e {data.guests.rooms} {data.guests.rooms === 1 ? "quarto" : "quartos"}, não encontrámos tipos de quarto
-                com stock e lotação adequados neste período. Ajusta a pesquisa ou contacta a receção.
+                e {data.guests.rooms} {data.guests.rooms === 1 ? "unidade" : "unidades"}, não encontrámos categorias
+                com stock e lotação adequados neste período. Ajusta a pesquisa ou contacta o suporte.
               </p>
             </div>
           ) : (
@@ -287,9 +288,9 @@ export function AvailabilitySearch() {
                 </div>
 
                 {filteredResults.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-12 text-center shadow-hotel-sm">
+                  <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-12 text-center shadow-surface-sm">
                     <p className="text-base font-semibold text-neutral-800">
-                      Nenhum quarto corresponde aos filtros selecionados.
+                      Nenhum resultado corresponde aos filtros selecionados.
                     </p>
                     <p className="mt-2 text-sm text-neutral-600">
                       Tenta alargar a faixa de preço ou desativa algumas opções.
@@ -303,7 +304,7 @@ export function AvailabilitySearch() {
                     {filteredResults.map((room) => (
                 <li
                   key={room.roomTypeId}
-                  className="flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-hotel-md transition-shadow duration-200 ease-out hover:shadow-hotel-lg"
+                  className="flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-surface-md transition-shadow duration-200 ease-out hover:shadow-surface-lg"
                 >
                   <div className="relative aspect-[16/10] w-full bg-neutral-100">
                     {room.imageUrls[0] ? (
@@ -337,8 +338,8 @@ export function AvailabilitySearch() {
                       <h4 className="text-lg font-semibold tracking-tight text-neutral-900">{room.name}</h4>
                       <Badge tone="success">
                         {room.availableRooms === 1
-                          ? "1 quarto disponível"
-                          : `${room.availableRooms} quartos disponíveis`}
+                          ? "1 unidade disponível"
+                          : `${room.availableRooms} unidades disponíveis`}
                       </Badge>
                     </div>
                     <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-neutral-600">

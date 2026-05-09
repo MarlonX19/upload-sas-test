@@ -108,7 +108,7 @@ function summaryLabel(v: GuestPickerValue): string {
     v.children === 0
       ? "0 crianças"
       : `${v.children} ${v.children === 1 ? "criança" : "crianças"}`;
-  const r = `${v.rooms} ${v.rooms === 1 ? "quarto" : "quartos"}`;
+  const r = `${v.rooms} ${v.rooms === 1 ? "unidade" : "unidades"}`;
   return `${a} · ${c} · ${r}`;
 }
 
@@ -170,8 +170,8 @@ export function GuestRoomPicker({ value, onChange, disabled }: GuestRoomPickerPr
         <div
           id={panelId}
           role="dialog"
-          aria-label="Hóspedes e quartos"
-          className="absolute left-0 right-0 z-[100] mt-2 rounded-xl border border-neutral-200 bg-white p-4 shadow-hotel-lg sm:left-auto sm:right-0 sm:w-[min(100vw-2rem,22rem)]"
+          aria-label="Ocupação e unidades"
+          className="absolute left-0 right-0 z-[100] mt-2 rounded-xl border border-neutral-200 bg-white p-4 shadow-surface-lg sm:left-auto sm:right-0 sm:w-[min(100vw-2rem,22rem)]"
         >
           <div className="divide-y divide-neutral-200">
             <CounterRow
@@ -191,7 +191,7 @@ export function GuestRoomPicker({ value, onChange, disabled }: GuestRoomPickerPr
               onInc={() => setDraft((d) => ({ ...d, children: Math.min(CHILD_MAX, d.children + 1) }))}
             />
             <CounterRow
-              label="Quartos"
+              label="Unidades"
               value={draft.rooms}
               decDisabled={draft.rooms <= ROOM_MIN}
               incDisabled={draft.rooms >= ROOM_MAX}
@@ -216,7 +216,7 @@ export function GuestRoomPicker({ value, onChange, disabled }: GuestRoomPickerPr
               </button>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-primary-600">
-              Animais de assistência não contam como pets. Em caso de dúvida, contacta a receção antes de reservar.
+              Animais de assistência não contam como pets. Em caso de dúvida, contacta o suporte antes de continuar.
             </p>
           </div>
 

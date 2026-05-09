@@ -32,13 +32,16 @@ export async function POST(req: Request) {
 
   if (!out.ok) {
     if (out.code === "ROOM_TYPE_NOT_IN_HOTEL") {
-      return NextResponse.json({ error: "Tipo de quarto não pertence a este hotel." }, { status: 400 });
+      return NextResponse.json({ error: "A categoria não pertence a esta organização." }, { status: 400 });
     }
     if (out.code === "DUPLICATE_ROOM_NUMBER") {
-      return NextResponse.json({ error: "Já existe um quarto com este número neste hotel." }, { status: 409 });
+      return NextResponse.json(
+        { error: "Já existe um registo com este identificador nesta organização." },
+        { status: 409 },
+      );
     }
     return NextResponse.json(
-      { error: out.code === "ERROR" ? out.message : "Não foi possível criar o quarto." },
+      { error: out.code === "ERROR" ? out.message : "Não foi possível criar o registo." },
       { status: 500 },
     );
   }

@@ -15,7 +15,7 @@ export class CompleteRoomFileUrlUseCase {
   ): Promise<CompleteRoomFileUrlResult> {
     const ok = await this.roomAdminRepository.roomBelongsToHotel(roomId, input.hotelId);
     if (!ok) {
-      return { ok: false, code: "ROOM_NOT_FOUND", message: "Quarto ou hotel inválido." };
+      return { ok: false, code: "ROOM_NOT_FOUND", message: "Registo ou organização inválidos." };
     }
     try {
       const set = await this.roomAdminRepository.setRoomFileUrlByFileId(
@@ -24,7 +24,7 @@ export class CompleteRoomFileUrlUseCase {
         input.publicBlobUrl,
       );
       if (!set) {
-        return { ok: false, code: "FILE_NOT_FOUND", message: "Ficheiro não encontrado no quarto." };
+        return { ok: false, code: "FILE_NOT_FOUND", message: "Ficheiro não encontrado neste registo." };
       }
       return { ok: true };
     } catch (e) {

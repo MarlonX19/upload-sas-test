@@ -95,7 +95,7 @@ export function RoomFiltersPanel({ filters, onPatch, onReset, showFooterNote }: 
             </div>
           </div>
           <p className="mt-2 text-xs leading-relaxed text-neutral-500">
-            Filtra por lotação máxima do tipo de quarto (nº de pessoas).
+            Filtra por lotação máxima da categoria (nº de pessoas).
           </p>
         </FilterSection>
 

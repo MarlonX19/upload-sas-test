@@ -13,8 +13,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "hotelli — Reservas",
-  description: "Reserve o seu quarto no hotelli Hotel Lisboa.",
+  title: "Upload SAS — demonstração",
+  description: "Exemplo de upload de ficheiros com URLs assinadas (Azure SAS) e backoffice.",
 };
 
 export default function RootLayout({
