@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 import { MAX_ROOM_PDF_BYTES, MAX_ROOM_PDF_COUNT } from "@/domain/rooms/room-pdf-policy";
 import type { AdminHotelOption, AdminRoomTypeOption } from "@/domain/repositories/room-admin.repository";
@@ -60,6 +61,7 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
   const [onLine, setOnLine] = useState(
     () => typeof navigator !== "undefined" && navigator.onLine,
   );
+  const [lastRegisteredRoomId, setLastRegisteredRoomId] = useState<string | null>(null);
 
   useEffect(() => {
     void listRoomUploadSessions().then(setPendingSessions);
@@ -201,6 +203,7 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
     e.preventDefault();
     setMessage(null);
     setHud(null);
+    setLastRegisteredRoomId(null);
 
     const list = files ? Array.from(files) : [];
     if (list.length > MAX_ROOM_PDF_COUNT) {
@@ -293,6 +296,7 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
       }
 
       setMessage({ type: "ok", text: "Registo criado e PDFs associados com sucesso." });
+      setLastRegisteredRoomId(roomId);
       setNumber("");
       setFiles(null);
     } catch (err) {
@@ -355,17 +359,27 @@ export function RegisterRoomForm({ hotels, initialRoomTypes }: Props) {
 
       <form onSubmit={(e) => void onSubmit(e)} className="space-y-6">
         {message && (
-          <p
-            role="alert"
-            className={cn(
-              "rounded-lg border p-3 text-sm",
-              message.type === "ok"
-                ? "border-green-200 bg-green-50 text-green-900"
-                : "border-red-200 bg-red-50 text-red-800",
+          <div className="space-y-3">
+            <p
+              role="alert"
+              className={cn(
+                "rounded-lg border p-3 text-sm",
+                message.type === "ok"
+                  ? "border-green-200 bg-green-50 text-green-900"
+                  : "border-red-200 bg-red-50 text-red-800",
+              )}
+            >
+              {message.text}
+            </p>
+            {message.type === "ok" && lastRegisteredRoomId && (
+              <Link
+                href={`/admin/rooms/${encodeURIComponent(lastRegisteredRoomId)}`}
+                className="inline-flex h-10 items-center justify-center rounded-md bg-primary-600 px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              >
+                Ver detalhes do registro
+              </Link>
             )}
-          >
-            {message.text}
-          </p>
+          </div>
         )}
 
         <div className="grid gap-4 sm:grid-cols-2">

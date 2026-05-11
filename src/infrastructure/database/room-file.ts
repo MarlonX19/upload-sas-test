@@ -1,3 +1,10 @@
+import type {
+  RoomDocumentAnalysisStatus,
+  RoomDocumentIdea,
+  RoomDocumentSoco,
+  RoomDocumentStep,
+} from "@/domain/rooms/value-objects/room-document-analysis";
+
 /**
  * Metadados de ficheiro (ex.: PDF) associado a um quarto.
  * O binário fica no Azure Storage; no MongoDB guarda-se o nome, o URL e um `fileId` estável para correlacionar o upload.
@@ -8,4 +15,10 @@ export type RoomFile = {
   fileName: string;
   /** Vazio até o upload no Azure concluir. */
   fileURL: string;
+  analysisStatus?: RoomDocumentAnalysisStatus;
+  analysisError?: string;
+  analysisSteps?: RoomDocumentStep[];
+  socos?: RoomDocumentSoco[];
+  ideas?: RoomDocumentIdea[];
+  analysisUpdatedAt?: Date;
 };

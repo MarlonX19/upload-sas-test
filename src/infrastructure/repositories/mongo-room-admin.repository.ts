@@ -8,6 +8,8 @@ import type {
   CreateRoomParams,
   RoomAdminRepository,
 } from "@/domain/repositories/room-admin.repository";
+import type { AdminRoomDetail, AdminRoomFileDetail } from "@/domain/repositories/admin-room-detail";
+import type { RoomFileDocumentAnalysisPatch } from "@/domain/repositories/room-file-document-analysis-patch";
 import type { RoomFileRef } from "@/domain/rooms/value-objects/room-file-ref";
 import { COLLECTIONS } from "@/infrastructure/database/collections";
 import type { RoomFile } from "@/infrastructure/database/room-file";
@@ -147,6 +149,45 @@ export class MongoRoomAdminRepository implements RoomAdminRepository {
     return (res.matchedCount ?? 0) > 0;
   }
 
+  async updateRoomFileDocumentAnalysisByFileId(
+    roomId: string,
+    fileId: string,
+    patch: RoomFileDocumentAnalysisPatch,
+  ): Promise<boolean> {
+    if (!ObjectId.isValid(roomId)) {
+      return false;
+    }
+    const $set: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+    if (patch.analysisStatus !== undefined) {
+      $set["files.$.analysisStatus"] = patch.analysisStatus;
+    }
+    if (patch.analysisError !== undefined) {
+      $set["files.$.analysisError"] = patch.analysisError;
+    }
+    if (patch.analysisSteps !== undefined) {
+      $set["files.$.analysisSteps"] = patch.analysisSteps;
+    }
+    if (patch.socos !== undefined) {
+      $set["files.$.socos"] = patch.socos;
+    }
+    if (patch.ideas !== undefined) {
+      $set["files.$.ideas"] = patch.ideas;
+    }
+    if (patch.analysisUpdatedAt !== undefined) {
+      $set["files.$.analysisUpdatedAt"] = patch.analysisUpdatedAt;
+    }
+
+    const client = await clientPromise;
+    const db = client.db();
+    const res = await db.collection(COLLECTIONS.rooms).updateOne(
+      { _id: new ObjectId(roomId), "files.fileId": fileId },
+      { $set } as unknown as UpdateFilter<Document>,
+    );
+    return (res.matchedCount ?? 0) > 0;
+  }
+
   async findRoomFileNameByFileId(roomId: string, fileId: string): Promise<string | null> {
     if (!ObjectId.isValid(roomId)) {
       return null;
@@ -170,5 +211,84 @@ export class MongoRoomAdminRepository implements RoomAdminRepository {
       }
     }
     return null;
+  }
+
+  async getRoomDetailForAdmin(roomId: string): Promise<AdminRoomDetail | null> {
+    if (!ObjectId.isValid(roomId)) {
+      return null;
+    }
+    const client = await clientPromise;
+    const db = client.db();
+    const doc = await db.collection(COLLECTIONS.rooms).findOne({ _id: new ObjectId(roomId) });
+    if (!doc) {
+      return null;
+    }
+
+    const hotelOid = doc.hotelId as ObjectId;
+    const roomTypeOid = doc.roomTypeId as ObjectId;
+
+    const [hotelDoc, roomTypeDoc] = await Promise.all([
+      db.collection(COLLECTIONS.hotels).findOne({ _id: hotelOid }, { projection: { name: 1 } }),
+      db.collection(COLLECTIONS.roomTypes).findOne({ _id: roomTypeOid }, { projection: { name: 1 } }),
+    ]);
+
+    const rawFiles = doc.files;
+    const files: AdminRoomFileDetail[] = [];
+    if (Array.isArray(rawFiles)) {
+      for (const item of rawFiles) {
+        const row = item as Record<string, unknown>;
+        const fileId = typeof row.fileId === "string" ? row.fileId : "";
+        const fileName = typeof row.fileName === "string" ? row.fileName : "";
+        const fileURL = typeof row.fileURL === "string" ? row.fileURL : "";
+        if (!fileId) continue;
+
+        const analysisUpdatedAt =
+          row.analysisUpdatedAt instanceof Date
+            ? row.analysisUpdatedAt.toISOString()
+            : typeof row.analysisUpdatedAt === "string"
+              ? row.analysisUpdatedAt
+              : null;
+
+        const f: AdminRoomFileDetail = {
+          fileId,
+          fileName,
+          fileURL,
+          analysisUpdatedAt,
+        };
+        if (typeof row.analysisStatus === "string") {
+          f.analysisStatus = row.analysisStatus as AdminRoomFileDetail["analysisStatus"];
+        }
+        if (typeof row.analysisError === "string") {
+          f.analysisError = row.analysisError;
+        }
+        if (Array.isArray(row.analysisSteps)) {
+          f.analysisSteps = row.analysisSteps as AdminRoomFileDetail["analysisSteps"];
+        }
+        if (Array.isArray(row.socos)) {
+          f.socos = row.socos as AdminRoomFileDetail["socos"];
+        }
+        if (Array.isArray(row.ideas)) {
+          f.ideas = row.ideas as AdminRoomFileDetail["ideas"];
+        }
+        files.push(f);
+      }
+    }
+
+    const createdAt = doc.createdAt instanceof Date ? doc.createdAt : new Date(0);
+    const updatedAt = doc.updatedAt instanceof Date ? doc.updatedAt : new Date(0);
+
+    return {
+      id: roomId,
+      hotelId: hotelOid.toHexString(),
+      hotelName: typeof hotelDoc?.name === "string" ? hotelDoc.name : "—",
+      roomTypeId: roomTypeOid.toHexString(),
+      roomTypeName: typeof roomTypeDoc?.name === "string" ? roomTypeDoc.name : "—",
+      number: typeof doc.number === "string" ? doc.number : String(doc.number ?? ""),
+      floor: typeof doc.floor === "number" ? doc.floor : Number(doc.floor ?? 0),
+      status: typeof doc.status === "string" ? doc.status : String(doc.status ?? ""),
+      files,
+      createdAt: createdAt.toISOString(),
+      updatedAt: updatedAt.toISOString(),
+    };
   }
 }

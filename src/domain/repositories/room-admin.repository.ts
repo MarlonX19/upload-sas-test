@@ -1,3 +1,5 @@
+import type { AdminRoomDetail } from "@/domain/repositories/admin-room-detail";
+import type { RoomFileDocumentAnalysisPatch } from "@/domain/repositories/room-file-document-analysis-patch";
 import type { RoomFileRef } from "@/domain/rooms/value-objects/room-file-ref";
 
 export type AdminHotelOption = {
@@ -38,7 +40,17 @@ export interface RoomAdminRepository {
   /** Atualiza `fileURL` do item com o `fileId` dado (preenchimento pós-upload Azure). */
   setRoomFileUrlByFileId(roomId: string, fileId: string, publicBlobUrl: string): Promise<boolean>;
   /**
+   * Actualiza campos de análise (passos, SOCOS, ideias, estado) no item `files` com o `fileId` dado.
+   */
+  updateRoomFileDocumentAnalysisByFileId(
+    roomId: string,
+    fileId: string,
+    patch: RoomFileDocumentAnalysisPatch,
+  ): Promise<boolean>;
+  /**
    * Resolve o nome lógico do ficheiro no quarto (para o nome de blob no Azure) ou `null` se não existir.
    */
   findRoomFileNameByFileId(roomId: string, fileId: string): Promise<string | null>;
+  /** Detalhe do quarto para o backoffice (ficheiros, URLs, análise IA). */
+  getRoomDetailForAdmin(roomId: string): Promise<AdminRoomDetail | null>;
 }

@@ -123,12 +123,6 @@ export function GuestRoomPicker({ value, onChange, disabled }: GuestRoomPickerPr
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (open) {
-      setDraft(value);
-    }
-  }, [open, value]);
-
-  useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
       const el = rootRef.current;
@@ -157,7 +151,11 @@ export function GuestRoomPicker({ value, onChange, disabled }: GuestRoomPickerPr
         aria-haspopup="dialog"
         onClick={() => {
           setCalendarOpen(false);
-          setGuestPickerOpen(!open);
+          const nextOpen = !open;
+          if (nextOpen) {
+            setDraft(value);
+          }
+          setGuestPickerOpen(nextOpen);
         }}
         className="flex h-12 w-full items-center gap-2 rounded-md border-2 border-warning bg-white px-3 text-left text-sm font-medium text-neutral-900 shadow-sm transition-[box-shadow,background-color] duration-200 ease-out hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
       >

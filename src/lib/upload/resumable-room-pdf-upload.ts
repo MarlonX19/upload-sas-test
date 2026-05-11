@@ -258,7 +258,11 @@ export async function uploadResumableRoomPdfToAzureAndSaveUrl(
     {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hotelId, publicBlobUrl: sas.publicBlobUrl }),
+      body: JSON.stringify({
+        hotelId,
+        publicBlobUrl: sas.publicBlobUrl,
+        mimeType: session.contentType || "application/pdf",
+      }),
     },
   );
   if (!patchRes.ok) {

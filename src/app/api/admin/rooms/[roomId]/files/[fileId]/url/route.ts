@@ -45,5 +45,5 @@ export async function PATCH(req: Request, context: Ctx) {
     return NextResponse.json({ error: out.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, analysisEnqueued: out.analysisEnqueued });
 }
