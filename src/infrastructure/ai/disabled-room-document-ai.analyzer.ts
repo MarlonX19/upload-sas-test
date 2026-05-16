@@ -1,4 +1,7 @@
-import type { RoomDocumentAiAnalyzer } from "@/application/ports/room-document-ai-analyzer.port";
+import type {
+  RoomDocumentAiAnalyzer,
+  RoomDocumentAiModelOutput,
+} from "@/application/ports/room-document-ai-analyzer.port";
 import type {
   RoomDocumentIdea,
   RoomDocumentSoco,
@@ -10,7 +13,7 @@ export class DisabledRoomDocumentAiAnalyzer implements RoomDocumentAiAnalyzer {
   async extractStepsFromPdf(input: {
     pdfBytes: Uint8Array;
     mimeType: string;
-  }): Promise<RoomDocumentStep[]> {
+  }): Promise<RoomDocumentAiModelOutput<RoomDocumentStep[]>> {
     void input;
     throw new Error("Análise por IA desactivada: defina GENAI_KEY.");
   }
@@ -18,12 +21,14 @@ export class DisabledRoomDocumentAiAnalyzer implements RoomDocumentAiAnalyzer {
   async extractSocosFromPdf(input: {
     pdfBytes: Uint8Array;
     mimeType: string;
-  }): Promise<RoomDocumentSoco[]> {
+  }): Promise<RoomDocumentAiModelOutput<RoomDocumentSoco[]>> {
     void input;
     throw new Error("Análise por IA desactivada: defina GENAI_KEY.");
   }
 
-  async generateIdeasFromSteps(input: { steps: RoomDocumentStep[] }): Promise<RoomDocumentIdea[]> {
+  async generateIdeasFromSteps(input: {
+    steps: RoomDocumentStep[];
+  }): Promise<RoomDocumentAiModelOutput<RoomDocumentIdea[]>> {
     void input;
     throw new Error("Análise por IA desactivada: defina GENAI_KEY.");
   }

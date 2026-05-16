@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { completeRoomFileUrlBodySchema } from "@/application/rooms/dtos/complete-room-file-url.schema";
 import { CompleteRoomFileUrlUseCase } from "@/application/rooms/use-cases/complete-room-file-url.use-case";
 import { container } from "@/di/container";
+import { logger } from "@/lib/logger";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -20,12 +21,31 @@ export async function PATCH(req: Request, context: Ctx) {
   let json: unknown;
   try {
     json = await req.json();
-  } catch {
+  } catch (e) {
+    logger.error(
+      {
+        event: "complete_room_file_url_bad_json",
+        roomId,
+        fileId,
+        exceptionMessage: e instanceof Error ? e.message : String(e),
+        err: e instanceof Error ? e : new Error(String(e)),
+      },
+      "PATCH complete URL: JSON inválido.",
+    );
     return NextResponse.json({ error: "JSON inválido." }, { status: 400 });
   }
 
   const parsed = completeRoomFileUrlBodySchema.safeParse(json);
   if (!parsed.success) {
+    logger.error(
+      {
+        event: "complete_room_file_url_validation_failed",
+        roomId,
+        fileId,
+        validationDetails: parsed.error.flatten(),
+      },
+      "PATCH complete URL: dados inválidos.",
+    );
     return NextResponse.json(
       { error: "Dados inválidos.", details: parsed.error.flatten() },
       { status: 400 },

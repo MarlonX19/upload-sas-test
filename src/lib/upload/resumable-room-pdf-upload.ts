@@ -169,15 +169,20 @@ export async function uploadResumableRoomPdfToAzureAndSaveUrl(
       fileData: buf,
       completedBlockIndices: [],
       updatedAt: Date.now(),
+      uploadStartedAtEpochMs: Date.now(),
     };
     await putRoomUploadSession(session);
   } else {
-    const existing = await getRoomUploadSession(roomId, fileId);
+    let existing = await getRoomUploadSession(roomId, fileId);
     if (!existing) {
       throw new Error("Não existe sessão de upload guardada para retomar.");
     }
     if (existing.hotelId !== hotelId) {
       throw new Error("Sessão de upload incompatível com a organização actual.");
+    }
+    if (existing.uploadStartedAtEpochMs === undefined) {
+      existing = { ...existing, uploadStartedAtEpochMs: existing.updatedAt };
+      await putRoomUploadSession(existing);
     }
     session = existing;
   }
@@ -253,6 +258,11 @@ export async function uploadResumableRoomPdfToAzureAndSaveUrl(
 
   sas = await getSas();
 
+  const uploadWallMs =
+    session.uploadStartedAtEpochMs !== undefined
+      ? Math.max(0, Date.now() - session.uploadStartedAtEpochMs)
+      : undefined;
+
   const patchRes = await fetch(
     `/api/admin/rooms/${encodeURIComponent(roomId)}/files/${encodeURIComponent(fileId)}/url`,
     {
@@ -262,6 +272,9 @@ export async function uploadResumableRoomPdfToAzureAndSaveUrl(
         hotelId,
         publicBlobUrl: sas.publicBlobUrl,
         mimeType: session.contentType || "application/pdf",
+        ...(uploadWallMs !== undefined ? { uploadDurationMs: uploadWallMs } : {}),
+        fileSizeBytes: session.size,
+        fileName: session.fileName,
       }),
     },
   );

@@ -16,6 +16,8 @@ export type RoomUploadSessionV1 = {
   /** Índices de bloco já enviados com sucesso (0-based), únicos, ordenados */
   completedBlockIndices: number[];
   updatedAt: number;
+  /** Epoch (ms) em que o utilizador iniciou este upload (para duração total no PATCH). */
+  uploadStartedAtEpochMs?: number;
 };
 
 export function roomUploadSessionKey(roomId: string, fileId: string): string {

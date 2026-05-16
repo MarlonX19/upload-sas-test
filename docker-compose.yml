@@ -26,6 +26,27 @@ services:
     volumes:
       - redis-data:/data
 
+  jaeger-web:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger-web
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+
+  collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: collector
+    command: ["--config=/etc/otelcol-contrib/config.yml"]
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "13133:13133"
+    volumes:
+      - ./collector-config.yml:/etc/otelcol-contrib/config.yml
+    depends_on:
+      - jaeger-web
+
 volumes:
   mongo-data:
   redis-data:

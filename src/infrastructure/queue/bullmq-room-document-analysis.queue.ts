@@ -1,4 +1,5 @@
 import { Queue } from "bullmq";
+import { BullMQOtel } from "bullmq-otel";
 
 import type {
   RoomDocumentAnalysisQueuePort,
@@ -16,6 +17,7 @@ export class BullmqRoomDocumentAnalysisQueue implements RoomDocumentAnalysisQueu
     if (!this.queue) {
       this.queue = new Queue<RoomFileDocumentAnalysisJobPayload>(ROOM_FILE_DOCUMENT_ANALYSIS_QUEUE, {
         connection: getRedisConnection(),
+        telemetry: new BullMQOtel("Queue"),
       });
     }
     return this.queue;

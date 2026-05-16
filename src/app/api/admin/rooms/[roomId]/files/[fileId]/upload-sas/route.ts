@@ -4,6 +4,7 @@ import { issueRoomFileUploadSasBodySchema } from "@/application/rooms/dtos/issue
 import { IssueRoomFileUploadSasUseCase } from "@/application/rooms/use-cases/issue-room-file-upload-sas.use-case";
 import { auth } from "@/auth";
 import { container } from "@/di/container";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -21,12 +22,31 @@ export async function POST(req: Request, context: Ctx) {
   let json: unknown;
   try {
     json = await req.json();
-  } catch {
+  } catch (e) {
+    logger.error(
+      {
+        event: "room_upload_sas_bad_json",
+        roomId,
+        fileId,
+        exceptionMessage: e instanceof Error ? e.message : String(e),
+        err: e instanceof Error ? e : new Error(String(e)),
+      },
+      "POST upload-sas: corpo JSON inválido.",
+    );
     return NextResponse.json({ error: "JSON inválido." }, { status: 400 });
   }
 
   const parsed = issueRoomFileUploadSasBodySchema.safeParse(json);
   if (!parsed.success) {
+    logger.error(
+      {
+        event: "room_upload_sas_validation_failed",
+        roomId,
+        fileId,
+        validationDetails: parsed.error.flatten(),
+      },
+      "POST upload-sas: validação falhou.",
+    );
     return NextResponse.json(
       { error: "Dados inválidos.", details: parsed.error.flatten() },
       { status: 400 },

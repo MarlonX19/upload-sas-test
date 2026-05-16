@@ -1,3 +1,5 @@
+import { initializeOpenTelemetry } from "@/lib/open-telemetry";
+
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") {
     return;
@@ -5,6 +7,8 @@ export async function register() {
   if (process.env.NEXT_PHASE === "phase-production-build") {
     return;
   }
+  await initializeOpenTelemetry();
+
   const redisUrl = process.env.REDIS_CONNECTION_STRING?.trim();
   const genaiKey = process.env.GENAI_KEY?.trim();
   if (!redisUrl || !genaiKey) {
