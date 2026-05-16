@@ -1,0 +1,41 @@
+# ============================================================================
+# Exemplo Azure DevOps — build da imagem Docker (testes / CI).
+#
+# Segredos (AUTH_SECRET, MONGODB_URI, GENAI_KEY, …): usar Variable groups marcadas
+# como “secret”, ou apenas Configurações de aplicação do App Service / variáveis
+# do Contentor onde a imagem correr — não as coloques nos build-args públicos.
+#
+# NEXT_PUBLIC_APP_URL — injeta-te na BUILD (valor não secreto típico: URL HTTPS
+# público da app); define na pipeline `(NEXT_PUBLIC_APP_URL)` nos Pipeline variables.
+# ============================================================================
+
+trigger:
+  - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  imageRepository: "upload-sas-test"
+
+stages:
+  - stage: Build
+    displayName: Build imagem Docker
+    jobs:
+      - job: DockerJob
+        displayName: Docker
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - script: |
+              set -eu
+              docker build \
+                --build-arg NEXT_PUBLIC_APP_URL="$(NEXT_PUBLIC_APP_URL)" \
+                -t "$(imageRepository):$(Build.BuildId)" \
+                -t "$(imageRepository):latest" \
+                -f "$(Build.SourcesDirectory)/Dockerfile" \
+                "$(Build.SourcesDirectory)"
+            displayName: docker build
+
+          # Opcional — após ACR + service connection: docker login + docker push ...

@@ -1,0 +1,22 @@
+# Git / IDE
+.git
+.gitignore
+.cursor
+
+# Dependencies e artefactos locais
+node_modules
+.next
+dist
+coverage
+*.tsbuildinfo
+
+# Documentação opcional para reduzir contexto da build
+*.md
+
+# Variáveis locais — nunca na imagem; use .env.example como catálogo
+.env
+.env.*
+!.env.example
+
+# Azure DevOps
+.azuredevops/logs
