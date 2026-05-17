@@ -1,13 +1,22 @@
 # ============================================================================
-# Azure DevOps — build da imagem Docker (Next.js standalone).
+# Azure DevOps Pipeline
+# Build + Push da imagem Docker para Azure Container Registry (ACR)
 #
-# Segredos (AUTH_SECRET, MONGODB_URI, GENAI_KEY, …): Variable groups marcadas como
-# "secret" OU Application settings onde o contentor corre — não em build-args.
+# Registry:
+#   uploadsastest.azurecr.io
 #
-# NEXT_PUBLIC_APP_URL — pipeline variable (valor público típico: URL HTTPS da app).
+# Service Connection:
+#   uploadsastest-acr
+#
+# Imagem final:
+#   uploadsastest.azurecr.io/upload-sas-test:dev
+#   uploadsastest.azurecr.io/upload-sas-test:latest
+#
+# Secrets:
+#   NÃO colocar secrets em build-args.
+#   Use Variable Groups secretos ou App Settings no App Service.
+#
 # ============================================================================
-#
-# Docs Docker task: https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
 trigger:
   - feat/analises-pds
@@ -16,28 +25,49 @@ resources:
   - repo: self
 
 variables:
-  imageRepository: upload-sas-test
+  imageRepository: 'upload-sas-test'
+  containerRegistry: 'uploadsastest-acr'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  buildContext: '$(Build.SourcesDirectory)'
 
 stages:
-  - stage: Build
-    displayName: Build imagem Docker
+  - stage: BuildAndPush
+    displayName: Build and Push Docker image
+
     jobs:
       - job: DockerJob
-        displayName: Docker
+        displayName: Docker Build + Push
+
         pool:
           vmImage: ubuntu-latest
+
         steps:
           - checkout: self
             fetchDepth: 1
 
-          - script: |
-              set -eu
-              docker build \
-                --build-arg NEXT_PUBLIC_APP_URL="$(NEXT_PUBLIC_APP_URL)" \
-                -t "$(imageRepository):$(Build.BuildId)" \
-                -t "$(imageRepository):latest" \
-                -f "$(Build.SourcesDirectory)/Dockerfile" \
-                "$(Build.SourcesDirectory)"
-            displayName: docker build
+          - task: Docker@2
+            displayName: Build and Push image to ACR
 
-          # Opcional: após criar service connection ao ACR — docker login + docker push ...
+            inputs:
+              command: buildAndPush
+
+              # Nome da imagem no registry
+              repository: $(imageRepository)
+
+              # Service Connection criada no Azure DevOps
+              containerRegistry: $(containerRegistry)
+
+              # Dockerfile
+              dockerfile: $(dockerfilePath)
+
+              # Contexto do build
+              buildContext: $(buildContext)
+
+              # Build args
+              arguments: |
+                --build-arg NEXT_PUBLIC_APP_URL=$(NEXT_PUBLIC_APP_URL)
+
+              # Tags
+              tags: |
+                dev
+                latest
