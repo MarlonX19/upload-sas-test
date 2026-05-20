@@ -5,65 +5,62 @@ Transforma gravações de ecrã em documentação passo a passo em PDF, com capt
 ## Fluxo
 
 1. Utilizador autenticado acede a `/upload/video-dtp`.
-2. Seleciona um vídeo (MP4, WebM, MOV) e envia para Azure Blob via SAS.
-3. API cria job MongoDB (`dtp_jobs`) e enfileira análise BullMQ.
-4. Worker descarrega o vídeo, extrai frames com **ffmpeg**, deteta passos com **Vertex AI** (`@ai-sdk/google-vertex`), gera PDF com **pdf-lib** e faz upload do resultado.
-5. UI faz polling do estado e permite download do PDF.
+2. Seleciona um vídeo (MP4, WebM, MOV) e envia **diretamente ao servidor** (`POST /api/dtp/jobs` multipart).
+3. O vídeo é gravado em **diretório temporário do SO** (`os.tmpdir()` ou `DTP_TEMP_DIR`), não no Azure.
+4. API cria job MongoDB (`dtp_jobs`) e enfileira análise BullMQ.
+5. Worker usa ffmpeg + Vertex no ficheiro local, gera PDF, faz **upload só do PDF** para Azure.
+6. Worker **apaga** o diretório temporário do vídeo (`finally`).
+7. UI faz polling e permite download do PDF.
+
+## Armazenamento
+
+| Artefacto | Onde fica |
+|-----------|-----------|
+| Vídeo de entrada | Temp local `{tmpdir}/dtp/{jobId}/input.{ext}` — **removido após análise** |
+| Screenshots | Só em memória para montar o PDF (não vão para Azure) |
+| PDF final | Azure Blob (`dtp-{jobId}.pdf`) |
+
+**Não** guardar vídeos na pasta do projeto. Opcional: `DTP_TEMP_DIR=/var/dtp-temp` no container Azure com disco adequado.
 
 ## Pré-requisitos
 
 | Requisito | Variável / comando |
 |-----------|-------------------|
 | MongoDB | `MONGODB_URI` |
-| Azure Storage (SAS upload + leitura server-side) | `AZURE_STORAGE_ACCOUNT_NAME`, `AZURE_STORAGE_UPLOADS_CONTAINER` |
+| Azure Storage (apenas PDF) | `AZURE_STORAGE_ACCOUNT_NAME`, `AZURE_STORAGE_UPLOADS_CONTAINER` |
 | Redis (fila) | `REDIS_CONNECTION_STRING` |
-| Vertex AI | `GENAI_KEY` (service account JSON em base64), opcional `GENAI_MODEL` (default `gemini-2.5-flash`) |
-| **ffmpeg no PATH** | `ffmpeg -version` — macOS: `brew install ffmpeg`. Opcional: `FFMPEG_PATH` / `FFPROBE_PATH` no `.env` |
-| Autenticação | NextAuth + Entra (`AUTH_SECRET`, `AZURE_AD_*`) |
+| Vertex AI | `GENAI_KEY`, opcional `GENAI_MODEL` |
+| **ffmpeg no PATH** | `ffmpeg -version` — macOS: `brew install ffmpeg`; Docker: `apt install ffmpeg` |
+| Autenticação | NextAuth + Entra |
+| Temp (opcional) | `DTP_TEMP_DIR` |
 
 Sem `REDIS_CONNECTION_STRING` + `GENAI_KEY`, os jobs ficam em `queued` (fila noop).
 
 ## Limites
 
-- **1 vídeo** por job
-- **500 MB** máximo por ficheiro
-- **30 minutos** duração máxima (validada no worker)
-- **~40 frames** máximo extraídos para análise IA
+- **1 vídeo** por job, **500 MB** máximo, **30 min** duração (worker)
+- Upload HTTP: `maxDuration = 300` na rota; `proxyClientMaxBodySize: 500mb` no Next
+
+## Deploy / réplicas
+
+O worker precisa aceder ao **mesmo caminho** onde a API gravou o vídeo. MVP: **1 réplica** da app ou volume partilhado montado em `DTP_TEMP_DIR`.
 
 ## Rotas API (autenticadas)
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| POST | `/api/dtp/upload-sas` | Emite SAS para upload de vídeo |
-| POST | `/api/dtp/jobs` | Cria job e enfileira análise |
+| POST | `/api/dtp/jobs` | `multipart/form-data` campo `video` — cria job e enfileira |
 | GET | `/api/dtp/jobs/[jobId]` | Estado e passos |
 | GET | `/api/dtp/jobs/[jobId]/download` | Download do PDF |
 
 ## Template PDF
 
-O layout do PDF é **definido em código** (não pela IA), para garantir o mesmo padrão em todos os jobs:
-
-| Elemento | Comportamento |
-|----------|----------------|
-| **Capa (página 1)** | Título `DTP generated`, nome do vídeo e data de geração |
-| **Páginas de conteúdo** | Cabeçalho fixo: *Esses dados são sensíveis e de uso interno na empresa.* |
-| **Rodapé** | `Página X de Y` em todas as páginas exceto a capa |
-
-Ficheiros: [`src/domain/dtp/dtp-pdf-template.ts`](src/domain/dtp/dtp-pdf-template.ts), [`src/infrastructure/documents/dtp-pdf-layout.ts`](src/infrastructure/documents/dtp-pdf-layout.ts), [`src/infrastructure/documents/dtp-pdf.builder.ts`](src/infrastructure/documents/dtp-pdf.builder.ts).
-
-Futuro: variável de ambiente `DTP_PDF_TEMPLATE=default` para múltiplos templates.
-
-## Estrutura de código
-
-- **Domain:** `src/domain/dtp/`, `src/domain/upload/video-dtp-upload-policy.ts`
-- **Application:** `src/application/dtp/use-cases/`
-- **Infrastructure:** ffmpeg, Vertex, PDF, Mongo, BullMQ worker
-- **UI:** `src/presentation/features/dtp/`, página `src/app/upload/video-dtp/page.tsx`
+- Capa: `DTP generated`
+- Cabeçalho de confidencialidade nas páginas de conteúdo
+- Definido em [`src/domain/dtp/dtp-pdf-template.ts`](src/domain/dtp/dtp-pdf-template.ts)
 
 ## Testes
 
 ```bash
 bun test
 ```
-
-Inclui testes de política de vídeo, mapeamento de timestamps e geração de PDF.

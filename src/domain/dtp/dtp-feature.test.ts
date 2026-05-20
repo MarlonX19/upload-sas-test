@@ -6,6 +6,7 @@ import {
   DTP_COVER_TITLE,
   DTP_HEADER_DISCLAIMER,
 } from "@/domain/dtp/dtp-pdf-template";
+import { getDtpJobTempDir, resolveVideoInputPath } from "@/domain/dtp/dtp-temp-storage";
 import { buildCandidateTimestamps, findNearestFrame } from "@/domain/dtp/map-timestamp-to-frame";
 import {
   isAllowedDtpVideoFileName,
@@ -72,6 +73,19 @@ describe("pdf-text-sanitize", () => {
 
   it("substitui travessão por hífen", () => {
     assert.equal(sanitizePdfText("Passo 1 — título"), "Passo 1 - título");
+  });
+});
+
+describe("dtp-temp-storage", () => {
+  it("resolve diretório temp fora do repo", () => {
+    const dir = getDtpJobTempDir("job-123");
+    assert.ok(!dir.includes("upload-sas-test/src"));
+    assert.match(dir, /dtp[/\\]job-123$/);
+  });
+
+  it("resolve caminho de input com extensão", () => {
+    const path = resolveVideoInputPath("job-1", "demo.mov");
+    assert.match(path, /input\.mov$/);
   });
 });
 

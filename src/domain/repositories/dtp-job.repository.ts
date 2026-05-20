@@ -7,8 +7,6 @@ export type CreateDtpJobParams = {
   userId: string;
   videoFileName: string;
   videoMimeType: string;
-  videoBlobUrl: string;
-  videoBlobName: string;
 };
 
 export type UpdateDtpJobPatch = {

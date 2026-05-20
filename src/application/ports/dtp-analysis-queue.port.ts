@@ -1,7 +1,7 @@
 export type DtpAnalysisJobPayload = {
   jobId: string;
   userId: string;
-  videoBlobUrl: string;
+  videoLocalPath: string;
   videoFileName: string;
   videoMimeType: string;
 };

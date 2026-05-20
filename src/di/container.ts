@@ -22,9 +22,8 @@ import { CompleteRoomFileUrlUseCase } from "@/application/rooms/use-cases/comple
 import { ProcessRoomFileDocumentAnalysisUseCase } from "@/application/rooms/use-cases/process-room-file-document-analysis.use-case";
 import { IssueRoomFileUploadSasUseCase } from "@/application/rooms/use-cases/issue-room-file-upload-sas.use-case";
 import { IssuePdfBlobUploadSasUseCase } from "@/application/upload/use-cases/issue-pdf-blob-upload-sas.use-case";
-import { CreateDtpJobUseCase } from "@/application/dtp/use-cases/create-dtp-job.use-case";
+import { CreateDtpJobWithVideoUseCase } from "@/application/dtp/use-cases/create-dtp-job-with-video.use-case";
 import { GetDtpJobUseCase } from "@/application/dtp/use-cases/get-dtp-job.use-case";
-import { IssueVideoDtpUploadSasUseCase } from "@/application/dtp/use-cases/issue-video-dtp-upload-sas.use-case";
 import { ProcessDtpVideoAnalysisUseCase } from "@/application/dtp/use-cases/process-dtp-video-analysis.use-case";
 import type { AvailabilityReadRepository } from "@/domain/repositories/availability-read.repository";
 import type { RoomAdminRepository } from "@/domain/repositories/room-admin.repository";
@@ -133,12 +132,8 @@ container
   .toConstantValue(new GetAdminRoomDetailUseCase(roomAdminRepository));
 
 container
-  .bind(IssueVideoDtpUploadSasUseCase)
-  .toConstantValue(new IssueVideoDtpUploadSasUseCase(userDelegationWriteSas));
-
-container
-  .bind(CreateDtpJobUseCase)
-  .toConstantValue(new CreateDtpJobUseCase(dtpJobRepository, dtpAnalysisQueue));
+  .bind(CreateDtpJobWithVideoUseCase)
+  .toConstantValue(new CreateDtpJobWithVideoUseCase(dtpJobRepository, dtpAnalysisQueue));
 
 container.bind(GetDtpJobUseCase).toConstantValue(new GetDtpJobUseCase(dtpJobRepository));
 
@@ -147,7 +142,6 @@ container
   .toConstantValue(
     new ProcessDtpVideoAnalysisUseCase(
       dtpJobRepository,
-      blobBinaryFetcher,
       blobBinaryUploader,
       videoFrameExtractor,
       dtpVideoAiAnalyzer,

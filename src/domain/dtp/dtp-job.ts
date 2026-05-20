@@ -6,8 +6,6 @@ export type DtpJob = {
   userId: string;
   videoFileName: string;
   videoMimeType: string;
-  videoBlobUrl: string;
-  videoBlobName: string;
   status: DtpJobStatus;
   steps?: DtpStep[];
   pdfBlobUrl?: string;

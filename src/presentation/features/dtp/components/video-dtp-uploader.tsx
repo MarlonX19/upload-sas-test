@@ -7,11 +7,7 @@ import {
   ALLOWED_DTP_VIDEO_EXTENSIONS,
   MAX_DTP_VIDEO_BYTES,
 } from "@/domain/upload/video-dtp-upload-policy";
-import {
-  createDtpJob,
-  fetchDtpJob,
-  uploadVideoToAzure,
-} from "@/lib/upload/azure-video-upload";
+import { fetchDtpJob, uploadDtpVideoWithProgress } from "@/lib/upload/dtp-video-upload";
 import { Button } from "@/presentation/shared/ui/button";
 import { cn } from "@/lib/cn";
 
@@ -112,17 +108,11 @@ export function VideoDtpUploader() {
     setUploadProgress(0);
 
     try {
-      const sas = await uploadVideoToAzure(file, setUploadProgress);
+      const { job } = await uploadDtpVideoWithProgress(file, setUploadProgress);
       setPhase("processing");
-      const { job } = await createDtpJob({
-        publicBlobUrl: sas.publicBlobUrl,
-        blobName: sas.blobName,
-        fileName: file.name,
-        mimeType: file.type || "video/mp4",
-      });
       setJobId(job.id);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Falha no envio ou criação do job.";
+      const msg = e instanceof Error ? e.message : "Falha no envio do vídeo.";
       setError(msg);
       setPhase("error");
     }
@@ -170,7 +160,7 @@ export function VideoDtpUploader() {
         <p className="text-sm font-medium text-neutral-800">Arrasta a gravação de ecrã para aqui</p>
         <p className="mt-1 text-xs text-neutral-500">ou clica para escolher um vídeo</p>
         <p className="mt-3 text-xs text-neutral-400">
-          MP4, WebM ou MOV · máx. {MAX_DTP_VIDEO_BYTES / (1024 * 1024)} MB · 1 ficheiro
+          MP4, WebM ou MOV · máx. {MAX_DTP_VIDEO_BYTES / (1024 * 1024)} MB · envio temporário ao servidor
         </p>
         <input
           ref={inputRef}

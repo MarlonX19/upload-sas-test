@@ -6,7 +6,9 @@ import { promisify } from "node:util";
 import ffmpeg from "fluent-ffmpeg";
 
 import type { VideoFrameExtractorPort } from "@/application/ports/video-frame-extractor.port";
+import { getDtpJobTempDir } from "@/domain/dtp/dtp-temp-storage";
 import { buildCandidateTimestamps } from "@/domain/dtp/map-timestamp-to-frame";
+import { cleanupDtpJobTempDir } from "@/infrastructure/dtp/dtp-video-file-storage";
 import {
   ffmpegBinDir,
   ffmpegInstallHint,
@@ -138,18 +140,18 @@ export class FfmpegVideoFrameExtractor implements VideoFrameExtractorPort {
   }
 }
 
-/** Grava bytes de vídeo num ficheiro temporário e devolve o caminho. */
+/** Remove diretório temporário do job (vídeo + artefactos). */
+export async function cleanupTempVideoDir(jobId: string): Promise<void> {
+  await cleanupDtpJobTempDir(jobId);
+}
+
+/** @deprecated Vídeo passa a ser gravado no upload API; mantido para testes. */
 export async function writeTempVideoFile(jobId: string, videoBytes: Uint8Array): Promise<string> {
-  const dir = join(tmpdir(), `dtp-${jobId}`);
+  const dir = getDtpJobTempDir(jobId);
   await mkdir(dir, { recursive: true });
   const videoPath = join(dir, "input-video");
   await writeFile(videoPath, videoBytes);
   return videoPath;
-}
-
-export async function cleanupTempVideoDir(jobId: string): Promise<void> {
-  const dir = join(tmpdir(), `dtp-${jobId}`);
-  await rm(dir, { recursive: true, force: true }).catch(() => undefined);
 }
 
 /** Verifica se ffmpeg está disponível no PATH ou em caminhos conhecidos. */

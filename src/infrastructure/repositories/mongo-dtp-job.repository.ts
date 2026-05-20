@@ -17,8 +17,6 @@ type DtpJobDoc = {
   userId: string;
   videoFileName: string;
   videoMimeType: string;
-  videoBlobUrl: string;
-  videoBlobName: string;
   status: DtpJobStatus;
   steps?: DtpStep[];
   pdfBlobUrl?: string;
@@ -26,6 +24,9 @@ type DtpJobDoc = {
   errorMessage?: string;
   createdAt: Date;
   updatedAt: Date;
+  /** Legado — jobs antigos com upload Azure; ignorado no fluxo novo. */
+  videoBlobUrl?: string;
+  videoBlobName?: string;
 };
 
 function toDomain(doc: DtpJobDoc): DtpJob {
@@ -34,8 +35,6 @@ function toDomain(doc: DtpJobDoc): DtpJob {
     userId: doc.userId,
     videoFileName: doc.videoFileName,
     videoMimeType: doc.videoMimeType,
-    videoBlobUrl: doc.videoBlobUrl,
-    videoBlobName: doc.videoBlobName,
     status: doc.status,
     steps: doc.steps,
     pdfBlobUrl: doc.pdfBlobUrl,
@@ -57,8 +56,6 @@ export class MongoDtpJobRepository implements DtpJobRepository {
       userId: params.userId,
       videoFileName: params.videoFileName,
       videoMimeType: params.videoMimeType,
-      videoBlobUrl: params.videoBlobUrl,
-      videoBlobName: params.videoBlobName,
       status: "queued",
       createdAt: now,
       updatedAt: now,
