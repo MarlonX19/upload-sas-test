@@ -12,8 +12,14 @@ import {
   isAllowedDtpVideoFileName,
   isAllowedDtpVideoMime,
   MAX_DTP_VIDEO_BYTES,
+  normalizeDtpVideoMime,
 } from "@/domain/upload/video-dtp-upload-policy";
 import { buildAzureVideoBlobName } from "@/domain/upload/azure-video-blob-name";
+import {
+  buildDefaultDtpRecordingFileName,
+  ensureWebmFileName,
+} from "@/lib/dtp/dtp-screen-recorder-utils";
+import { parseDurationFromFfmpegOutput } from "@/infrastructure/video/video-duration-probe";
 import { buildDtpPdf } from "@/infrastructure/documents/dtp-pdf.builder";
 import { sanitizePdfText } from "@/infrastructure/documents/pdf-text-sanitize";
 
@@ -36,6 +42,32 @@ describe("video-dtp-upload-policy", () => {
 
   it("define limite de 500 MB", () => {
     assert.equal(MAX_DTP_VIDEO_BYTES, 500 * 1024 * 1024);
+  });
+
+  it("normaliza MIME com codecs (MediaRecorder)", () => {
+    assert.equal(normalizeDtpVideoMime("video/webm;codecs=vp9"), "video/webm");
+    assert.equal(isAllowedDtpVideoMime("video/webm;codecs=vp9,opus"), true);
+  });
+});
+
+describe("video-duration-probe", () => {
+  it("interpreta Duration do stderr do ffmpeg", () => {
+    const stderr =
+      "Input #0, matroska,webm, from 'x.webm':\n  Duration: 00:05:12.34, start: 0.000000, bitrate: 500 kb/s\n";
+    const sec = parseDurationFromFfmpegOutput(stderr);
+    assert.ok(Math.abs(sec - (5 * 60 + 12.34)) < 0.1);
+  });
+});
+
+describe("dtp-screen-recorder-utils", () => {
+  it("gera nome default com extensão webm", () => {
+    const name = buildDefaultDtpRecordingFileName(new Date("2026-05-19T21:56:45Z"));
+    assert.match(name, /^Gravação DTP \d{4}-\d{2}-\d{2} \d{2}\.\d{2}\.\d{2}\.webm$/);
+  });
+
+  it("garante extensão .webm no nome", () => {
+    assert.equal(ensureWebmFileName("demo"), "demo.webm");
+    assert.equal(ensureWebmFileName("demo.mp4"), "demo.webm");
   });
 });
 

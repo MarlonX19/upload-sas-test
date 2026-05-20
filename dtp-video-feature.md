@@ -5,12 +5,23 @@ Transforma gravações de ecrã em documentação passo a passo em PDF, com capt
 ## Fluxo
 
 1. Utilizador autenticado acede a `/upload/video-dtp`.
-2. Seleciona um vídeo (MP4, WebM, MOV) e envia **diretamente ao servidor** (`POST /api/dtp/jobs` multipart).
-3. O vídeo é gravado em **diretório temporário do SO** (`os.tmpdir()` ou `DTP_TEMP_DIR`), não no Azure.
-4. API cria job MongoDB (`dtp_jobs`) e enfileira análise BullMQ.
-5. Worker usa ffmpeg + Vertex no ficheiro local, gera PDF, faz **upload só do PDF** para Azure.
-6. Worker **apaga** o diretório temporário do vídeo (`finally`).
-7. UI faz polling e permite download do PDF.
+2. **Upload:** seleciona um vídeo (MP4, WebM, MOV) **ou** **Gravar vídeo:** grava ecrã no browser (janela do navegador ou ecrã inteiro), pré-visualiza e confirma o ficheiro `.webm` em memória.
+3. Clica **Iniciar análise** — envio **diretamente ao servidor** (`POST /api/dtp/jobs` multipart).
+4. O vídeo é gravado em **diretório temporário do SO** (`os.tmpdir()` ou `DTP_TEMP_DIR`), não no Azure.
+5. API cria job MongoDB (`dtp_jobs`) e enfileira análise BullMQ.
+6. Worker usa ffmpeg + Vertex no ficheiro local, gera PDF, faz **upload só do PDF** para Azure.
+7. Worker **apaga** o diretório temporário do vídeo (`finally`).
+8. UI faz polling e permite download do PDF.
+
+## Gravação de ecrã (browser)
+
+- APIs: `getDisplayMedia` + `MediaRecorder` (só no cliente; até **Iniciar análise** o vídeo não vai ao servidor).
+- Requer **HTTPS** em produção (ou `localhost` em desenvolvimento).
+- Browsers recomendados: Chrome / Edge (melhor suporte a `displaySurface` e WebM).
+- A UI oferece preferência **janela do navegador** vs **ecrã inteiro**; o diálogo nativo do SO continua a ser obrigatório.
+- Limite de gravação no cliente: **30 min** (para depois o worker); ficheiro **500 MB** máximo.
+- WebM do browser: a extração de frames usa filtro `fps` (decode completo), não seek por timestamp — WebM do MediaRecorder costuma não ter duração correta no metadata e o seek devolvia sempre o primeiro frame (diálogo de partilha).
+- Código: [`src/lib/dtp/use-dtp-screen-recorder.ts`](src/lib/dtp/use-dtp-screen-recorder.ts), [`src/presentation/features/dtp/components/dtp-screen-recorder-panel.tsx`](src/presentation/features/dtp/components/dtp-screen-recorder-panel.tsx).
 
 ## Armazenamento
 
@@ -38,7 +49,7 @@ Sem `REDIS_CONNECTION_STRING` + `GENAI_KEY`, os jobs ficam em `queued` (fila noo
 
 ## Limites
 
-- **1 vídeo** por job, **500 MB** máximo, **30 min** duração (worker)
+- **1 vídeo** por job, **500 MB** máximo, **30 min** duração (worker e gravação no browser)
 - Upload HTTP: `maxDuration = 300` na rota; `proxyClientMaxBodySize: 500mb` no Next
 
 ## Deploy / réplicas

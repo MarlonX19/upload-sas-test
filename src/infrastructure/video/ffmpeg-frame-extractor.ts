@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -7,13 +7,14 @@ import ffmpeg from "fluent-ffmpeg";
 
 import type { VideoFrameExtractorPort } from "@/application/ports/video-frame-extractor.port";
 import { getDtpJobTempDir } from "@/domain/dtp/dtp-temp-storage";
-import { buildCandidateTimestamps } from "@/domain/dtp/map-timestamp-to-frame";
 import { cleanupDtpJobTempDir } from "@/infrastructure/dtp/dtp-video-file-storage";
 import {
   ffmpegBinDir,
   ffmpegInstallHint,
   resolveFfmpegBinaries,
 } from "@/infrastructure/video/resolve-ffmpeg-binaries";
+import { probeVideoDurationSec } from "@/infrastructure/video/video-duration-probe";
+import { logger } from "@/lib/logger";
 
 const execFileAsync = promisify(execFile);
 
@@ -39,62 +40,69 @@ function execEnv(): NodeJS.ProcessEnv {
   return { ...process.env, [pathKey]: `${dir}:${current}` };
 }
 
-function probeDurationSec(videoPath: string): Promise<number> {
+function ffprobeAsync(videoPath: string): Promise<ffmpeg.FfprobeData> {
   ensureFfmpegConfigured();
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(videoPath, (err, metadata) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      const dur = metadata.format.duration ?? 0;
-      resolve(typeof dur === "number" && Number.isFinite(dur) ? dur : 0);
+      if (err) reject(err);
+      else resolve(metadata);
     });
   });
 }
 
-async function detectSceneTimestamps(videoPath: string): Promise<number[]> {
+/**
+ * Extrai frames com filtro fps (decodifica o vídeo inteiro).
+ * Evita seek em WebM do MediaRecorder, onde metadata de duração falha e seek devolve sempre o 1.º frame.
+ */
+async function extractFramesByFps(input: {
+  videoPath: string;
+  sampleIntervalSec: number;
+  maxFrames: number;
+  maxDurationSec: number;
+}): Promise<{ timestampSec: number; pngBytes: Uint8Array }[]> {
   const bins = ensureFfmpegConfigured();
+  const workDir = join(tmpdir(), `dtp-frames-${Date.now()}`);
+  await mkdir(workDir, { recursive: true });
+  const pattern = join(workDir, "frame-%03d.png");
+
   try {
-    const { stderr } = await execFileAsync(
+    await execFileAsync(
       bins.ffmpeg,
       [
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-t",
+        String(input.maxDurationSec),
         "-i",
-        videoPath,
+        input.videoPath,
         "-vf",
-        "select='gt(scene,0.3)',showinfo",
-        "-f",
-        "null",
-        "-",
+        `fps=1/${input.sampleIntervalSec}`,
+        "-frames:v",
+        String(input.maxFrames),
+        "-q:v",
+        "2",
+        pattern,
       ],
       { maxBuffer: 10 * 1024 * 1024, env: execEnv() },
     );
-    const output = stderr ?? "";
-    const timestamps: number[] = [];
-    const re = /pts_time:([\d.]+)/g;
-    let match: RegExpExecArray | null;
-    while ((match = re.exec(output)) !== null) {
-      const t = parseFloat(match[1]!);
-      if (Number.isFinite(t)) timestamps.push(t);
-    }
-    return timestamps;
-  } catch {
-    return [];
-  }
-}
 
-function extractFrameAt(videoPath: string, timestampSec: number, outPath: string): Promise<void> {
-  ensureFfmpegConfigured();
-  return new Promise((resolve, reject) => {
-    ffmpeg(videoPath)
-      .seekInput(timestampSec)
-      .frames(1)
-      .outputOptions(["-q:v", "2"])
-      .output(outPath)
-      .on("end", () => resolve())
-      .on("error", (err) => reject(err))
-      .run();
-  });
+    const files = (await readdir(workDir))
+      .filter((f) => f.endsWith(".png"))
+      .sort();
+
+    const frames: { timestampSec: number; pngBytes: Uint8Array }[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const buf = await readFile(join(workDir, files[i]!));
+      frames.push({
+        timestampSec: i * input.sampleIntervalSec,
+        pngBytes: new Uint8Array(buf),
+      });
+    }
+    return frames;
+  } finally {
+    await rm(workDir, { recursive: true, force: true }).catch(() => undefined);
+  }
 }
 
 export class FfmpegVideoFrameExtractor implements VideoFrameExtractorPort {
@@ -104,37 +112,47 @@ export class FfmpegVideoFrameExtractor implements VideoFrameExtractorPort {
     sampleIntervalSec: number;
     maxDurationSec: number;
   }): Promise<{ durationSec: number; frames: { timestampSec: number; pngBytes: Uint8Array }[] }> {
-    let durationSec = await probeDurationSec(input.videoPath);
-    if (durationSec > input.maxDurationSec) {
+    let probedDurationSec = await probeVideoDurationSec(input.videoPath, ffprobeAsync);
+
+    if (probedDurationSec > input.maxDurationSec) {
       throw new Error(
-        `Vídeo demasiado longo (${Math.round(durationSec / 60)} min). Máximo: ${Math.round(input.maxDurationSec / 60)} min.`,
+        `Vídeo demasiado longo (${Math.round(probedDurationSec / 60)} min). Máximo: ${Math.round(input.maxDurationSec / 60)} min.`,
       );
     }
-    if (durationSec <= 0) durationSec = 1;
 
-    const sceneTimestamps = await detectSceneTimestamps(input.videoPath);
-    const candidateTimestamps = buildCandidateTimestamps(
-      durationSec,
-      sceneTimestamps,
-      input.maxFrames,
-      input.sampleIntervalSec,
-    );
+    const frames = await extractFramesByFps({
+      videoPath: input.videoPath,
+      sampleIntervalSec: input.sampleIntervalSec,
+      maxFrames: input.maxFrames,
+      maxDurationSec: input.maxDurationSec,
+    });
 
-    const workDir = join(tmpdir(), `dtp-frames-${Date.now()}`);
-    await mkdir(workDir, { recursive: true });
-
-    const frames: { timestampSec: number; pngBytes: Uint8Array }[] = [];
-    try {
-      for (let i = 0; i < candidateTimestamps.length; i++) {
-        const t = candidateTimestamps[i]!;
-        const outPath = join(workDir, `frame-${i}.png`);
-        await extractFrameAt(input.videoPath, t, outPath);
-        const buf = await readFile(outPath);
-        frames.push({ timestampSec: t, pngBytes: new Uint8Array(buf) });
-      }
-    } finally {
-      await rm(workDir, { recursive: true, force: true }).catch(() => undefined);
+    if (frames.length === 0) {
+      throw new Error("Não foi possível extrair frames do vídeo.");
     }
+
+    const inferredFromFrames =
+      frames.length > 1
+        ? frames[frames.length - 1]!.timestampSec + input.sampleIntervalSec
+        : input.sampleIntervalSec;
+
+    const durationSec =
+      probedDurationSec >= 1
+        ? Math.max(probedDurationSec, inferredFromFrames)
+        : inferredFromFrames;
+
+    logger.info(
+      {
+        event: "dtp_frame_extraction",
+        videoPath: input.videoPath,
+        probedDurationSec,
+        durationSec,
+        frameCount: frames.length,
+        firstTimestampSec: frames[0]?.timestampSec,
+        lastTimestampSec: frames[frames.length - 1]?.timestampSec,
+      },
+      "Frames DTP extraídos (amostragem fps).",
+    );
 
     return { durationSec, frames };
   }

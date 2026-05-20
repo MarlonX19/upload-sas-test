@@ -10,6 +10,7 @@ import {
   isAllowedDtpVideoFileName,
   isAllowedDtpVideoMime,
   MAX_DTP_VIDEO_BYTES,
+  normalizeDtpVideoMime,
 } from "@/domain/upload/video-dtp-upload-policy";
 
 export const runtime = "nodejs";
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
   }
 
   const fileName = file.name.trim() || "video.mp4";
-  const mimeType = file.type.trim() || "video/mp4";
+  const mimeType = normalizeDtpVideoMime(file.type.trim() || "video/mp4");
   const fileSize = file.size;
 
   if (!isAllowedDtpVideoFileName(fileName)) {

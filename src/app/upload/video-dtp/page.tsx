@@ -23,9 +23,10 @@ export default async function VideoDtpPage() {
             Upload video to create DTP
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-600">
-            Carregue uma gravação de ecrã que demonstre um fluxo na aplicação. Após o upload, o
-            sistema extrai capturas, analisa os passos com IA e gera um documento PDF com instruções
-            e screenshots — pronto para partilhar como documentação operacional (DTP).
+            Carregue um vídeo existente ou grave o ecrã diretamente no browser (janela do navegador
+            ou ecrã inteiro). Após confirmar o vídeo, o sistema extrai capturas, analisa os passos
+            com IA e gera um documento PDF com instruções e screenshots — documentação operacional
+            (DTP).
           </p>
           <div className="mt-8 rounded-2xl border border-neutral-200 bg-white p-6 shadow-surface-sm sm:p-8">
             <VideoDtpUploader />

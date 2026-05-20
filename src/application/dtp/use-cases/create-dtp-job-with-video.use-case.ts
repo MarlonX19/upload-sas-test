@@ -8,6 +8,7 @@ import {
   isAllowedDtpVideoFileName,
   isAllowedDtpVideoMime,
   MAX_DTP_VIDEO_BYTES,
+  normalizeDtpVideoMime,
 } from "@/domain/upload/video-dtp-upload-policy";
 import { cleanupDtpJobTempDir, saveDtpVideoToTemp } from "@/infrastructure/dtp/dtp-video-file-storage";
 
@@ -30,10 +31,12 @@ export class CreateDtpJobWithVideoUseCase {
   ) {}
 
   async execute(input: CreateDtpJobWithVideoInput): Promise<CreateDtpJobWithVideoResult> {
+    const mimeType = normalizeDtpVideoMime(input.mimeType || "video/mp4");
+
     if (!isAllowedDtpVideoFileName(input.fileName)) {
       return { ok: false, code: "INVALID_INPUT", message: "Extensão de vídeo não suportada." };
     }
-    if (!isAllowedDtpVideoMime(input.mimeType)) {
+    if (!isAllowedDtpVideoMime(mimeType)) {
       return { ok: false, code: "INVALID_INPUT", message: "Tipo MIME de vídeo não suportado." };
     }
     if (input.fileSize > MAX_DTP_VIDEO_BYTES) {
@@ -63,7 +66,7 @@ export class CreateDtpJobWithVideoUseCase {
       id: jobId,
       userId: input.userId,
       videoFileName: input.fileName,
-      videoMimeType: input.mimeType,
+      videoMimeType: mimeType,
     });
 
     try {
