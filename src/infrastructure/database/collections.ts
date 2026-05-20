@@ -10,6 +10,7 @@ export const COLLECTIONS = {
   bookings: "bookings",
   ratePlans: "rate_plans",
   payments: "payments",
+  dtpJobs: "dtp_jobs",
 } as const;
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];

@@ -45,6 +45,14 @@ export function AppNavbar() {
           )}
           {status === "authenticated" && (
             <Link
+              href="/upload/video-dtp"
+              className="hidden text-sm text-primary-600 hover:underline sm:inline"
+            >
+              Video → DTP
+            </Link>
+          )}
+          {status === "authenticated" && (
+            <Link
               href="/admin/rooms/new"
               className="hidden text-sm text-primary-600 hover:underline sm:inline"
             >

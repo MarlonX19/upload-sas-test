@@ -19,7 +19,11 @@ export async function register() {
       "@/infrastructure/queue/room-file-document-analysis.worker"
     );
     startRoomFileDocumentAnalysisWorker();
+    const { startDtpVideoAnalysisWorker } = await import(
+      "@/infrastructure/queue/dtp-video-analysis.worker"
+    );
+    startDtpVideoAnalysisWorker();
   } catch (e) {
-    console.error("[instrumentation] Não foi possível iniciar o worker de análise de PDF.", e);
+    console.error("[instrumentation] Não foi possível iniciar workers de análise.", e);
   }
 }
