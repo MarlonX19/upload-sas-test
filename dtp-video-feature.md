@@ -5,13 +5,19 @@ Transforma gravações de ecrã em documentação passo a passo em PDF, com capt
 ## Fluxo
 
 1. Utilizador autenticado acede a `/upload/video-dtp`.
-2. **Upload:** seleciona um vídeo (MP4, WebM, MOV) **ou** **Gravar vídeo:** grava ecrã no browser (janela do navegador ou ecrã inteiro), pré-visualiza e confirma o ficheiro `.webm` em memória.
-3. Clica **Iniciar análise** — envio **diretamente ao servidor** (`POST /api/dtp/jobs` multipart).
-4. O vídeo é gravado em **diretório temporário do SO** (`os.tmpdir()` ou `DTP_TEMP_DIR`), não no Azure.
-5. API cria job MongoDB (`dtp_jobs`) e enfileira análise BullMQ.
-6. Worker usa ffmpeg + Vertex no ficheiro local, gera PDF, faz **upload só do PDF** para Azure.
-7. Worker **apaga** o diretório temporário do vídeo (`finally`).
-8. UI faz polling e permite download do PDF.
+2. Escolhe o **idioma do texto (IA)** no select (títulos e descrições dos passos).
+3. **Upload:** seleciona um vídeo (MP4, WebM, MOV) **ou** **Gravar vídeo:** grava ecrã no browser (janela do navegador ou ecrã inteiro), pré-visualiza e confirma o ficheiro `.webm` em memória.
+4. Clica **Iniciar análise** — envio **diretamente ao servidor** (`POST /api/dtp/jobs` multipart, campos `video` + `outputLanguage`).
+5. O vídeo é gravado em **diretório temporário do SO** (`os.tmpdir()` ou `DTP_TEMP_DIR`), não no Azure.
+6. API cria job MongoDB (`dtp_jobs`) e enfileira análise BullMQ.
+7. Worker usa ffmpeg + Vertex no ficheiro local (prompt no idioma escolhido), gera PDF, faz **upload só do PDF** para Azure.
+8. Worker **apaga** o diretório temporário do vídeo (`finally`).
+9. UI faz polling e permite download do PDF.
+
+## Idioma do texto (IA)
+
+- Select na UI: `pt-BR`, `pt-PT`, `en`, `es`, `de`, `fr` (definição em [`src/domain/dtp/dtp-output-language.ts`](src/domain/dtp/dtp-output-language.ts)).
+- Apenas títulos e descrições dos passos seguem o idioma; layout do PDF Bosch mantém rótulos em inglês (`Step`, `STEP DESCRIPTION`).
 
 ## Gravação de ecrã (browser)
 
@@ -60,15 +66,17 @@ O worker precisa aceder ao **mesmo caminho** onde a API gravou o vídeo. MVP: **
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| POST | `/api/dtp/jobs` | `multipart/form-data` campo `video` — cria job e enfileira |
+| POST | `/api/dtp/jobs` | `multipart/form-data`: `video`, `outputLanguage` (opcional, default `pt-BR`) |
 | GET | `/api/dtp/jobs/[jobId]` | Estado e passos |
 | GET | `/api/dtp/jobs/[jobId]/download` | Download do PDF |
 
-## Template PDF
+## Template PDF (Bosch)
 
-- Capa: `DTP generated`
-- Cabeçalho de confidencialidade nas páginas de conteúdo
-- Definido em [`src/domain/dtp/dtp-pdf-template.ts`](src/domain/dtp/dtp-pdf-template.ts)
+- Capa: logo Bosch, **Desktop Procedure**, faixa `lineBosch.png`
+- Cabeçalho nas páginas de conteúdo: logo pequeno, metadados (Preparado por, Referência = nome do ficheiro, Data, Gerado por IA)
+- Passos: `Step N: título`, `STEP DESCRIPTION:`, screenshot centrado
+- Rodapé: `Página X de Y` (português)
+- Assets: [`src/assets/images/`](src/assets/images/) — definido em [`src/domain/dtp/dtp-pdf-template.ts`](src/domain/dtp/dtp-pdf-template.ts)
 
 ## Testes
 

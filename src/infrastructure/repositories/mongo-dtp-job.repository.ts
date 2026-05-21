@@ -6,6 +6,7 @@ import type {
   UpdateDtpJobPatch,
 } from "@/domain/repositories/dtp-job.repository";
 import type { DtpJob } from "@/domain/dtp/dtp-job";
+import { DEFAULT_DTP_OUTPUT_LANGUAGE, resolveDtpOutputLanguage } from "@/domain/dtp/dtp-output-language";
 import type { DtpStep } from "@/domain/dtp/dtp-step";
 import type { DtpJobStatus } from "@/domain/dtp/dtp-job-status";
 import { COLLECTIONS } from "@/infrastructure/database/collections";
@@ -17,6 +18,7 @@ type DtpJobDoc = {
   userId: string;
   videoFileName: string;
   videoMimeType: string;
+  outputLanguage?: string;
   status: DtpJobStatus;
   steps?: DtpStep[];
   pdfBlobUrl?: string;
@@ -35,6 +37,7 @@ function toDomain(doc: DtpJobDoc): DtpJob {
     userId: doc.userId,
     videoFileName: doc.videoFileName,
     videoMimeType: doc.videoMimeType,
+    outputLanguage: resolveDtpOutputLanguage(doc.outputLanguage ?? DEFAULT_DTP_OUTPUT_LANGUAGE),
     status: doc.status,
     steps: doc.steps,
     pdfBlobUrl: doc.pdfBlobUrl,
@@ -56,6 +59,7 @@ export class MongoDtpJobRepository implements DtpJobRepository {
       userId: params.userId,
       videoFileName: params.videoFileName,
       videoMimeType: params.videoMimeType,
+      outputLanguage: params.outputLanguage,
       status: "queued",
       createdAt: now,
       updatedAt: now,

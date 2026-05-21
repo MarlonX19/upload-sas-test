@@ -7,6 +7,7 @@ import type {
   DtpVideoAiAnalyzer,
   DtpVideoAiModelOutput,
 } from "@/application/ports/dtp-video-ai-analyzer.port";
+import { dtpAiLanguageInstruction, type DtpOutputLanguage } from "@/domain/dtp/dtp-output-language";
 import { findNearestFrame } from "@/domain/dtp/map-timestamp-to-frame";
 import { logger } from "@/lib/logger";
 
@@ -57,21 +58,25 @@ export class VertexDtpVideoAiAnalyzer implements DtpVideoAiAnalyzer {
   async detectStepsFromFrames(input: {
     frames: { timestampSec: number; pngBytes: Uint8Array }[];
     videoFileName: string;
+    outputLanguage: DtpOutputLanguage;
   }): Promise<DtpVideoAiModelOutput> {
     const sortedFrames = [...input.frames].sort((a, b) => a.timestampSec - b.timestampSec);
     const frameList = sortedFrames
       .map((f) => `- ${formatTimestamp(f.timestampSec)} (${f.timestampSec}s)`)
       .join("\n");
 
+    const langLine = dtpAiLanguageInstruction(input.outputLanguage);
+
     const prompt = `Analise estas capturas de ecrã extraídas de uma gravação de vídeo de software ("${input.videoFileName}").
 Cada imagem corresponde a um momento no vídeo (timestamps listados abaixo), ordenados do início ao fim.
-A documentação é de uso interno da empresa; use linguagem clara e operacional em português do brasil.
+A documentação é de uso interno da empresa.
+${langLine}
 Ignore diálogos do browser de partilha de ecrã, ecrãs pretos ou UI de sistema no início; foque no fluxo real da aplicação demonstrada depois da gravação começar.
 Identifique vários passos sequenciais do procedimento demonstrado no vídeo (mínimo 2 se o conteúdo o permitir).
 Para cada passo, indique:
 - order: número sequencial (1, 2, 3…)
 - title: título curto do passo
-- description: instrução clara do que foi feito e/o o que o utilizador deve fazer (português do brasil)
+- description: instrução clara do que foi feito e/o o que o utilizador deve fazer
 - timestampSec: segundo no vídeo que melhor representa esse passo (use os timestamps disponíveis)
 
 TIMESTAMPS DAS CAPTURAS:

@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { container } from "@/di/container";
 import { getSessionUserId } from "@/lib/dtp/session-user-id";
 import { logger } from "@/lib/logger";
+import { resolveDtpOutputLanguage } from "@/domain/dtp/dtp-output-language";
 import {
   isAllowedDtpVideoFileName,
   isAllowedDtpVideoMime,
@@ -62,12 +63,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Ficheiro de vídeo vazio." }, { status: 400 });
   }
 
+  const outputLanguageField = form.get("outputLanguage");
+  const outputLanguage = resolveDtpOutputLanguage(
+    typeof outputLanguageField === "string" ? outputLanguageField : undefined,
+  );
+
   const uc = container.get(CreateDtpJobWithVideoUseCase);
   const out = await uc.execute({
     userId: getSessionUserId(session),
     fileName,
     mimeType,
     fileSize,
+    outputLanguage,
     body: file.stream(),
   });
 

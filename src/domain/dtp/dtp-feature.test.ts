@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
-  DEFAULT_DTP_PDF_TEMPLATE,
-  DTP_COVER_TITLE,
-  DTP_HEADER_DISCLAIMER,
-} from "@/domain/dtp/dtp-pdf-template";
+  DEFAULT_DTP_OUTPUT_LANGUAGE,
+  dtpAiLanguageInstruction,
+  resolveDtpOutputLanguage,
+} from "@/domain/dtp/dtp-output-language";
+import { BOSCH_DTP_PDF_TEMPLATE, DTP_COVER_TITLE } from "@/domain/dtp/dtp-pdf-template";
 import { getDtpJobTempDir, resolveVideoInputPath } from "@/domain/dtp/dtp-temp-storage";
 import { buildCandidateTimestamps, findNearestFrame } from "@/domain/dtp/map-timestamp-to-frame";
 import {
@@ -121,11 +122,23 @@ describe("dtp-temp-storage", () => {
   });
 });
 
+describe("dtp-output-language", () => {
+  it("resolve idioma válido e fallback", () => {
+    assert.equal(resolveDtpOutputLanguage("en"), "en");
+    assert.equal(resolveDtpOutputLanguage("invalid"), DEFAULT_DTP_OUTPUT_LANGUAGE);
+  });
+
+  it("gera instrução de prompt por idioma", () => {
+    assert.match(dtpAiLanguageInstruction("en"), /English/i);
+    assert.match(dtpAiLanguageInstruction("pt-BR"), /Brasil/i);
+  });
+});
+
 describe("dtp-pdf-template", () => {
-  it("define capa e aviso de confidencialidade", () => {
-    assert.equal(DEFAULT_DTP_PDF_TEMPLATE.coverTitle, DTP_COVER_TITLE);
-    assert.equal(DEFAULT_DTP_PDF_TEMPLATE.headerDisclaimer, DTP_HEADER_DISCLAIMER);
-    assert.equal(DTP_COVER_TITLE, "DTP generated");
+  it("define template Bosch Desktop Procedure", () => {
+    assert.equal(BOSCH_DTP_PDF_TEMPLATE.coverTitle, DTP_COVER_TITLE);
+    assert.equal(DTP_COVER_TITLE, "Desktop Procedure");
+    assert.ok(BOSCH_DTP_PDF_TEMPLATE.assets.logoCover.includes("boschlogo"));
   });
 });
 

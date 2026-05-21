@@ -9,15 +9,16 @@ import {
   createDtpPdfLayoutContext,
   drawCoverPage,
   embedDtpPdfFonts,
-  formatStepTimestamp,
   wrapPdfText,
   type DtpPdfLayoutContext,
 } from "@/infrastructure/documents/dtp-pdf-layout";
+import { fitImageDimensions } from "@/infrastructure/documents/dtp-pdf-assets";
 import { sanitizePdfText } from "@/infrastructure/documents/pdf-text-sanitize";
 
 type ContentCursor = { page: PDFPage; y: number };
 
 export type DtpPdfBuildInput = {
+  /** Nome do ficheiro de vídeo (referência e título do procedimento). */
   title: string;
   createdAt: Date;
   steps: DtpStep[];
@@ -40,7 +41,9 @@ export async function buildDtpPdf(input: DtpPdfBuildInput): Promise<Uint8Array> 
   const template = resolveDtpPdfTemplate(input.templateId);
   const pdf = await PDFDocument.create();
   const fonts = await embedDtpPdfFonts(pdf);
-  const ctx = createDtpPdfLayoutContext(pdf, template, fonts);
+  const pageMeta = { videoFileName: input.title, createdAt: input.createdAt };
+  const ctx = await createDtpPdfLayoutContext(pdf, template, fonts, pageMeta);
+
   const { margin } = template.page;
   const { regular: font, bold: fontBold } = fonts;
   const colors = template.colors;
@@ -51,20 +54,28 @@ export async function buildDtpPdf(input: DtpPdfBuildInput): Promise<Uint8Array> 
   const cursor: ContentCursor = addContentPage(ctx);
 
   for (const step of sortedSteps) {
-    ensureContentSpace(ctx, cursor, 80);
+    ensureContentSpace(ctx, cursor, 100);
 
-    const stepHeader = sanitizePdfText(
-      `Passo ${step.order} - ${step.title} (${formatStepTimestamp(step.timestampSec)})`,
-    );
-    cursor.page.drawText(stepHeader, {
+    const stepHeading = sanitizePdfText(`Step ${step.order}: ${step.title}`);
+    cursor.page.drawText(stepHeading, {
       x: margin,
       y: cursor.y,
-      size: template.body.stepTitleSize,
+      size: template.body.stepHeadingSize,
       font: fontBold,
       color: rgb(colors.text.r, colors.text.g, colors.text.b),
       maxWidth: ctx.contentWidth,
     });
-    cursor.y -= 18;
+    cursor.y -= 22;
+
+    ensureContentSpace(ctx, cursor, 24);
+    cursor.page.drawText(sanitizePdfText("STEP DESCRIPTION:"), {
+      x: margin,
+      y: cursor.y,
+      size: template.body.stepLabelSize,
+      font: fontBold,
+      color: rgb(colors.text.r, colors.text.g, colors.text.b),
+    });
+    cursor.y -= 16;
 
     const descLines = wrapPdfText(step.description, 85);
     for (const line of descLines) {
@@ -79,25 +90,31 @@ export async function buildDtpPdf(input: DtpPdfBuildInput): Promise<Uint8Array> 
       });
       cursor.y -= 14;
     }
-    cursor.y -= 8;
+    cursor.y -= 10;
 
     const screenshot = input.screenshotBytesByOrder.get(step.order);
     if (screenshot && screenshot.length > 0) {
       try {
         const image = await pdf.embedPng(screenshot);
-        const imgWidth = Math.min(ctx.contentWidth, 500);
-        const scale = imgWidth / image.width;
-        const imgHeight = image.height * scale;
+        const maxW = Math.min(ctx.contentWidth, 480);
+        const maxH = 280;
+        const { width: imgWidth, height: imgHeight } = fitImageDimensions(
+          image.width,
+          image.height,
+          maxW,
+          maxH,
+        );
 
-        ensureContentSpace(ctx, cursor, imgHeight + 24);
+        ensureContentSpace(ctx, cursor, imgHeight + 28);
 
+        const imgX = margin + (ctx.contentWidth - imgWidth) / 2;
         cursor.page.drawImage(image, {
-          x: margin,
+          x: imgX,
           y: cursor.y - imgHeight,
           width: imgWidth,
           height: imgHeight,
         });
-        cursor.y -= imgHeight + 24;
+        cursor.y -= imgHeight + 28;
       } catch {
         ensureContentSpace(ctx, cursor, 20);
         cursor.page.drawText(sanitizePdfText("[Captura de ecrã indisponível]"), {
@@ -111,7 +128,7 @@ export async function buildDtpPdf(input: DtpPdfBuildInput): Promise<Uint8Array> 
       }
     }
 
-    cursor.y -= 12;
+    cursor.y -= 16;
   }
 
   applyFootersToAllPages(ctx);

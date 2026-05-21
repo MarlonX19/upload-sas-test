@@ -4,6 +4,7 @@ import type { DtpAnalysisQueuePort } from "@/application/ports/dtp-analysis-queu
 import { resolveVideoInputPath } from "@/domain/dtp/dtp-temp-storage";
 import type { DtpJobRepository } from "@/domain/repositories/dtp-job.repository";
 import type { DtpJob } from "@/domain/dtp/dtp-job";
+import type { DtpOutputLanguage } from "@/domain/dtp/dtp-output-language";
 import {
   isAllowedDtpVideoFileName,
   isAllowedDtpVideoMime,
@@ -17,6 +18,7 @@ export type CreateDtpJobWithVideoInput = {
   fileName: string;
   mimeType: string;
   fileSize: number;
+  outputLanguage: DtpOutputLanguage;
   body: ReadableStream<Uint8Array>;
 };
 
@@ -67,6 +69,7 @@ export class CreateDtpJobWithVideoUseCase {
       userId: input.userId,
       videoFileName: input.fileName,
       videoMimeType: mimeType,
+      outputLanguage: input.outputLanguage,
     });
 
     try {
@@ -76,6 +79,7 @@ export class CreateDtpJobWithVideoUseCase {
         videoLocalPath,
         videoFileName: job.videoFileName,
         videoMimeType: job.videoMimeType,
+        outputLanguage: job.outputLanguage,
       });
     } catch (e) {
       await cleanupDtpJobTempDir(jobId);

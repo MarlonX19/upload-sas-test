@@ -6,6 +6,7 @@ import type { DtpJobRepository } from "@/domain/repositories/dtp-job.repository"
 import { findNearestFrame } from "@/domain/dtp/map-timestamp-to-frame";
 import type { DtpStep } from "@/domain/dtp/dtp-step";
 import { buildAzureDtpPdfBlobName } from "@/domain/upload/azure-video-blob-name";
+import { resolveDtpOutputLanguage } from "@/domain/dtp/dtp-output-language";
 import {
   DTP_FRAME_SAMPLE_INTERVAL_SEC,
   MAX_DTP_FRAMES,
@@ -43,6 +44,11 @@ export class ProcessDtpVideoAnalysisUseCase {
       throw new Error("Job DTP não encontrado.");
     }
 
+    const storedJob = await this.dtpJobRepository.findByIdForUser(jobId, payload.userId);
+    const outputLanguage = resolveDtpOutputLanguage(
+      payload.outputLanguage ?? storedJob?.outputLanguage,
+    );
+
     try {
       await assertFfmpegAvailable();
 
@@ -67,6 +73,7 @@ export class ProcessDtpVideoAnalysisUseCase {
       const aiResult = await this.aiAnalyzer.detectStepsFromFrames({
         frames,
         videoFileName: payload.videoFileName,
+        outputLanguage,
       });
 
       const stepsWithScreenshots: DtpStep[] = [];

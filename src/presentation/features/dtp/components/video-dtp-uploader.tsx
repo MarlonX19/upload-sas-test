@@ -4,6 +4,11 @@ import { useCallback, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import {
+  DEFAULT_DTP_OUTPUT_LANGUAGE,
+  DTP_OUTPUT_LANGUAGE_OPTIONS,
+  type DtpOutputLanguage,
+} from "@/domain/dtp/dtp-output-language";
+import {
   ALLOWED_DTP_VIDEO_EXTENSIONS,
   MAX_DTP_VIDEO_BYTES,
 } from "@/domain/upload/video-dtp-upload-policy";
@@ -61,6 +66,7 @@ export function VideoDtpUploader() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [outputLanguage, setOutputLanguage] = useState<DtpOutputLanguage>(DEFAULT_DTP_OUTPUT_LANGUAGE);
 
   const jobQuery = useQuery({
     queryKey: ["dtp-job", jobId],
@@ -99,6 +105,7 @@ export function VideoDtpUploader() {
     setUploadProgress(0);
     setJobId(null);
     setError(null);
+    setOutputLanguage(DEFAULT_DTP_OUTPUT_LANGUAGE);
   }, []);
 
   const pickFile = useCallback((incoming: FileList | File[]) => {
@@ -145,7 +152,7 @@ export function VideoDtpUploader() {
     setUploadProgress(0);
 
     try {
-      const { job } = await uploadDtpVideoWithProgress(file, setUploadProgress);
+      const { job } = await uploadDtpVideoWithProgress(file, outputLanguage, setUploadProgress);
       setPhase("processing");
       setJobId(job.id);
     } catch (e) {
@@ -159,6 +166,28 @@ export function VideoDtpUploader() {
 
   return (
     <div className="w-full space-y-6">
+      <div className="rounded-xl border border-neutral-200 bg-neutral-50/80 px-4 py-3">
+        <label htmlFor="dtp-output-language" className="text-sm font-medium text-neutral-800">
+          Idioma do texto (IA)
+        </label>
+        <p className="mt-0.5 text-xs text-neutral-500">
+          Títulos e descrições dos passos no PDF serão gerados neste idioma.
+        </p>
+        <select
+          id="dtp-output-language"
+          value={outputLanguage}
+          disabled={busy}
+          onChange={(e) => setOutputLanguage(e.target.value as DtpOutputLanguage)}
+          className="mt-2 w-full max-w-md rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 shadow-sm focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400 disabled:opacity-60"
+        >
+          {DTP_OUTPUT_LANGUAGE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {entryMode === "upload" && (
         <>
           <div

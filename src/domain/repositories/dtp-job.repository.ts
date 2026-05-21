@@ -1,4 +1,5 @@
 import type { DtpJob } from "@/domain/dtp/dtp-job";
+import type { DtpOutputLanguage } from "@/domain/dtp/dtp-output-language";
 import type { DtpJobStatus } from "@/domain/dtp/dtp-job-status";
 import type { DtpStep } from "@/domain/dtp/dtp-step";
 
@@ -7,6 +8,7 @@ export type CreateDtpJobParams = {
   userId: string;
   videoFileName: string;
   videoMimeType: string;
+  outputLanguage: DtpOutputLanguage;
 };
 
 export type UpdateDtpJobPatch = {

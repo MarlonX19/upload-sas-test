@@ -1,8 +1,11 @@
+import type { DtpOutputLanguage } from "@/domain/dtp/dtp-output-language";
+
 export type DtpJobPollResponse = {
   job: {
     id: string;
     status: "queued" | "processing" | "completed" | "failed" | "uploading";
     videoFileName: string;
+    outputLanguage?: DtpOutputLanguage;
     steps?: {
       order: number;
       title: string;
@@ -25,12 +28,14 @@ export type UploadDtpVideoResult = {
  */
 export function uploadDtpVideoWithProgress(
   file: File,
+  outputLanguage: DtpOutputLanguage,
   onProgress: (percent: number) => void,
 ): Promise<UploadDtpVideoResult> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     const form = new FormData();
     form.append("video", file, file.name);
+    form.append("outputLanguage", outputLanguage);
 
     xhr.upload.addEventListener("progress", (ev) => {
       if (!ev.lengthComputable || file.size === 0) return;

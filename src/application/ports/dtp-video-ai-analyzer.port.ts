@@ -1,3 +1,4 @@
+import type { DtpOutputLanguage } from "@/domain/dtp/dtp-output-language";
 import type { DtpStep } from "@/domain/dtp/dtp-step";
 
 export type DtpVideoFrameInput = {
@@ -17,5 +18,6 @@ export interface DtpVideoAiAnalyzer {
   detectStepsFromFrames(input: {
     frames: DtpVideoFrameInput[];
     videoFileName: string;
+    outputLanguage: DtpOutputLanguage;
   }): Promise<DtpVideoAiModelOutput>;
 }

@@ -4,6 +4,7 @@ export type DtpJobClientView = {
   id: string;
   status: DtpJob["status"];
   videoFileName: string;
+  outputLanguage: DtpJob["outputLanguage"];
   steps?: DtpJob["steps"];
   pdfBlobUrl?: string;
   errorMessage?: string;
@@ -16,6 +17,7 @@ export function toDtpJobClientView(job: DtpJob): DtpJobClientView {
     id: job.id,
     status: job.status,
     videoFileName: job.videoFileName,
+    outputLanguage: job.outputLanguage,
     steps: job.steps,
     pdfBlobUrl: job.pdfBlobUrl,
     errorMessage: job.errorMessage,
