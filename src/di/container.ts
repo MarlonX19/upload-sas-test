@@ -13,6 +13,7 @@ import { UploadRoomPdfUseCase } from "@/application/rooms/use-cases/upload-room-
 import { CompleteRoomFileUrlUseCase } from "@/application/rooms/use-cases/complete-room-file-url.use-case";
 import { IssueRoomFileUploadSasUseCase } from "@/application/rooms/use-cases/issue-room-file-upload-sas.use-case";
 import { IssuePdfBlobUploadSasUseCase } from "@/application/upload/use-cases/issue-pdf-blob-upload-sas.use-case";
+import { IssueVideoBlobUploadSasUseCase } from "@/application/upload/use-cases/issue-video-blob-upload-sas.use-case";
 import type { AvailabilityReadRepository } from "@/domain/repositories/availability-read.repository";
 import type { RoomAdminRepository } from "@/domain/repositories/room-admin.repository";
 import { AxiosHttpService } from "@/infrastructure/http/axios-http.service";
@@ -63,6 +64,10 @@ container
 container
   .bind(IssuePdfBlobUploadSasUseCase)
   .toConstantValue(new IssuePdfBlobUploadSasUseCase(userDelegationWriteSas));
+
+container
+  .bind(IssueVideoBlobUploadSasUseCase)
+  .toConstantValue(new IssueVideoBlobUploadSasUseCase(userDelegationWriteSas));
 
 container
   .bind(CompleteRoomFileUrlUseCase)

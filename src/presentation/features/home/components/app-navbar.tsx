@@ -30,6 +30,9 @@ export function AppNavbar() {
           <Link href="/upload/pdfs" className="hidden text-sm text-primary-600 hover:underline sm:inline">
             Upload PDF
           </Link>
+          <Link href="/upload/videos" className="hidden text-sm text-primary-600 hover:underline sm:inline">
+            Upload vídeo
+          </Link>
           {status === "loading" && (
             <span className="max-w-[12rem] truncate text-neutral-400" aria-hidden>
               …

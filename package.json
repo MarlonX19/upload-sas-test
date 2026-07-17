@@ -3,11 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
+    "dev:turbo": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --import tsx --test src/domain/upload/azure-pdf-block-id.test.ts src/application/rooms/use-cases/issue-room-file-upload-sas.use-case.test.ts",
+    "postinstall": "node scripts/copy-ffmpeg-core.mjs",
+    "copy:ffmpeg": "node scripts/copy-ffmpeg-core.mjs",
+    "test": "node --import tsx --test src/domain/upload/azure-pdf-block-id.test.ts src/domain/upload/azure-video-blob-name.test.ts src/application/rooms/use-cases/issue-room-file-upload-sas.use-case.test.ts",
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:bun": "bun run scripts/seed.ts",
     "db:migrate-room-images": "tsx scripts/migrate-room-images.ts",
@@ -16,6 +19,9 @@
   "dependencies": {
     "@azure/identity": "^4.13.1",
     "@azure/storage-blob": "^12.31.0",
+    "@ffmpeg/core": "^0.12.10",
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "@tanstack/react-query": "^5.100.5",
     "axios": "^1.15.2",
     "date-fns": "^4.1.0",
@@ -32,15 +38,15 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "dotenv": "^16.4.7",
-    "tsx": "^4.19.3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^16.4.7",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
+    "tsx": "^4.19.3",
     "typescript": "^5"
   },
   "ignoreScripts": [

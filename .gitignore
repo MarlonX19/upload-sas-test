@@ -33,6 +33,13 @@ yarn-error.log*
 # room PDF uploads (local dev; production may use Azure only)
 /uploads
 
+# FFmpeg WASM assets (copied by scripts/copy-ffmpeg-core.mjs on postinstall)
+/public/ffmpeg/ffmpeg-core.js
+/public/ffmpeg/ffmpeg-core.wasm
+/public/ffmpeg/worker.js
+/public/ffmpeg/const.js
+/public/ffmpeg/errors.js
+
 # env files (can opt-in for committing if needed)
 .env*
 
